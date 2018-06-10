@@ -11,6 +11,8 @@ import json
 import argparse
 import urllib.parse
 
+from wikidata import Wikidata
+
 
 config = configparser.ConfigParser()
 config.read("./config.ini")
@@ -132,6 +134,7 @@ def main():
 
 	# Create an object for each supported wiki
 	supported_wikis = {
+		'wikidatawiki': Wikidata( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
 	}
 
 	# Prepare the records (fetch extra infos, clean some datas,...)
