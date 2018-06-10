@@ -98,7 +98,7 @@ def get_records( query ):
 # Main
 def main():
 	# Declare the command-line arguments
-	parser = argparse.ArgumentParser(description='Process some integers.')
+	parser = argparse.ArgumentParser(description='Reuse records made on Lingua Libre on some wikis.')
 	parser.add_argument('--item', help='run only on the given item')
 	parser.add_argument('--startdate', help='from which timestamp to start')
 	parser.add_argument('--enddate', help='at which timestamp to end')
