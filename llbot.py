@@ -84,12 +84,19 @@ def get_records( query ):
 
 # Main
 def main():
+	# Create an object for each supported wiki
+	supported_wikis = {
+		'wikidatawiki': Wikidata( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) ),
+		'frwiktionary': FrWiktionary( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
+	}
+
 	# Declare the command-line arguments
 	parser = argparse.ArgumentParser(description='Reuse records made on Lingua Libre on some wikis.')
 	parser.add_argument('--item', help='run only on the given item')
 	parser.add_argument('--startdate', help='from which timestamp to start')
 	parser.add_argument('--enddate', help='at which timestamp to end')
 	parser.add_argument('--user', help='run only on records from the given user')
+	parser.add_argument('--wiki', help='run only on the selected wiki', choices=list( supported_wikis.keys() ))
 	langgroup = parser.add_mutually_exclusive_group()
 	langgroup.add_argument('--lang', help='run only on records from the given language, identified by its lingua libre qid')
 	langgroup.add_argument('--langiso', help='run only on records from the given language, identified by its iso 693-3 code')
@@ -119,11 +126,10 @@ def main():
 	# Get the informations of all the records
 	records = get_records( BASEQUERY.replace( '#filters', filters ) )
 
-	# Create an object for each supported wiki
-	supported_wikis = {
-		'wikidatawiki': Wikidata( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
-		'frwiktionary': FrWiktionary( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
-	}
+	# Filter the wikis depending on the fetched arguments
+	if args.wiki != None:
+		tmp = supported_wikis[ args.wiki ]
+		supported_wikis = { args.wiki: tmp }
 
 	# Prepare the records (fetch extra infos, clean some datas,...)
 	for dbname in supported_wikis:
@@ -132,7 +138,8 @@ def main():
 	# Try to reuse each listed records on each supported wikis
 	for record in records:
 		for dbname in supported_wikis:
-			supported_wikis[ dbname ].execute( record )
+			if supported_wikis[ dbname ].execute( record ):
+				time.sleep(30)
 
 	print(len(records))
 

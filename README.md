@@ -24,6 +24,8 @@ optional arguments:
   --startdate STARTDATE from which timestamp to start
   --enddate ENDDATE     at which timestamp to end
   --user USER           run only on records from the given user
+  --wiki {wikidatawiki,frwiktionary}
+                        run only on the selected wiki
   --lang LANG           run only on records from the given language,
                         identified by its lingua libre qid
   --langiso LANGISO     run only on records from the given language,
