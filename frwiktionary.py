@@ -120,8 +120,15 @@ class FrWiktionary:
 		self.append_file( pronunciation_section, record[ 'file' ], record[ 'language' ][ 'qid' ], record[ 'speaker' ][ 'residence' ] )
 
 		# Save the result
-		# TODO: Manage editconflict     "code": "editconflict",
-		result = self.do_edit( transcription, wikicode, basetimestamp )
+		try:
+			result = self.do_edit( transcription, wikicode, basetimestamp )
+		except Exception as e:
+			# If we got an editconflict, just restart from the beginning
+			if str( e ).find( 'editconflict' ) > -1:
+				self.execute( record )
+			else:
+				raise e
+
 		if result == True:
 			print(record[ 'id' ] + ': added to frwiktionary - https://www.wiktionary.org/wiki/' + transcription)
 
