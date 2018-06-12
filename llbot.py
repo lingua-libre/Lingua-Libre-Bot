@@ -10,7 +10,9 @@ import argparse
 import time
 
 from sparql import Sparql
+
 from wikidata import Wikidata
+from frwiktionary import FrWiktionary
 
 
 config = configparser.ConfigParser()
@@ -120,6 +122,7 @@ def main():
 	# Create an object for each supported wiki
 	supported_wikis = {
 		'wikidatawiki': Wikidata( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
+		'frwiktionary': FrWiktionary( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
 	}
 
 	# Prepare the records (fetch extra infos, clean some datas,...)
