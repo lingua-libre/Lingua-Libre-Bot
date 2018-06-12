@@ -14,9 +14,11 @@ from sparql import Sparql
 API_ENDPOINT = 'https://fr.wiktionary.org/w/api.php'
 SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql'
 SUMMARY = 'Add an audio pronunciation file from Lingua Libre'
+
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = '\n\n=== {{S|prononciation}} ===\n$1'
 PRONUNCIATION_LINE = '\n* {{écouter|lang=$2|$3|audio=$1}}'
+
 LANGUAGE_QUERY = 'SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }'
 LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
@@ -26,6 +28,7 @@ WHERE {
   VALUES ?location { wd:$1 }
 }
 """
+
 BOTTOM_REGEX = re.compile( r'(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$', re.IGNORECASE )
 
 
@@ -46,7 +49,9 @@ class FrWiktionary:
 	Public methods
 	"""
 
-	#
+	# Prepare the records to be added on the French Wiktionary:
+	# - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
+	# - Get the labels of the speaker's location in French
 	def prepare(self, records):
 		sparql = Sparql( SPARQL_ENDPOINT )
 
@@ -75,9 +80,12 @@ class FrWiktionary:
 
 		return records
 
-	#
+	# Try to use the given record on the French Wiktionary
 	def execute(self, record):
+		# Normalize the record using frwiktionary's titles conventions
 		transcription = self.normalize( record[ 'transcription' ] )
+
+		# Fetch the content of the page having the transcription for title
 		( is_already_present, wikicode, basetimestamp ) = self.get_entry( transcription, record[ 'file' ] )
 
 		# Whether there is no entry for this record on frwiktionary
@@ -91,8 +99,9 @@ class FrWiktionary:
 		# Whether the record is already inside the entry
 		if is_already_present == True:
 			print(record[ 'id' ] + ': already on frwiktionary')
-			#return False
+			return False
 
+		# Try to extract the section of the language of the record
 		language_section = self.get_language_section( wikicode, record[ 'language' ][ 'qid' ] )
 
 		# Whether there is no section for the curent language
@@ -100,16 +109,15 @@ class FrWiktionary:
 			print(record[ 'id' ] + ': language section not found')
 			return False
 
+		# Try to extract the pronunciation subsection
 		pronunciation_section = self.get_pronunciation_section( language_section )
 
-		# Create the pronunciation section, if it doesn't exists
+		# Create the pronunciation section if it doesn't exists
 		if pronunciation_section == None:
 			pronunciation_section = self.create_pronunciation_section( language_section )
 
-		# Add the pronunciation file to the section
+		# Add the pronunciation file to the pronunciation section
 		self.append_file( pronunciation_section, record[ 'file' ], record[ 'language' ][ 'qid' ], record[ 'speaker' ][ 'residence' ] )
-
-		print(str(wikicode))
 
 		# Save the result
 		# TODO: Manage editconflict     "code": "editconflict",
@@ -125,20 +133,21 @@ class FrWiktionary:
 	Private methods
 	"""
 
-	#
+	# Normalize the transcription to fit frwiktionary's title conventions
 	def normalize(self, transcription):
 		return transcription.replace( '\'', '’' )
 
-	#
-	def invert_case(self, transcription):
-		if transcription[ 0 ].isupper():
-			transcription = transcription[ 0 ].lower() + transcription[1:]
+	# Invert the case of the first letter of the given string
+	def invert_case(self, text):
+		if text[ 0 ].isupper():
+			text = text[ 0 ].lower() + text[1:]
 		else:
-			transcription = transcription[ 0 ].upper() + transcription[1:]
+			text = text[ 0 ].upper() + text[1:]
 
-		return transcription
+		return text
 
-	#
+	# Fetch the contents of the given Wiktionary entry,
+	# and check by the way whether the file is already in it.
 	def get_entry(self, pagename, filename):
 		response = self.api.request({
 			"action": "query",
@@ -149,31 +158,40 @@ class FrWiktionary:
 			"titles": pagename,
 			"imimages": 'File:' + filename,
 		})
-
 		page = response[ 'query' ][ 'pages' ][ 0 ]
+
+		# If no pages have been found on this wiki for the given title
 		if 'missing' in page:
 			return ( False, False, 0 )
 
+		# If there is the 'images' key, this means that the API has found
+		# the file at least once in the page, see [[:mw:API:Images]]
 		is_already_present = ( 'images' in page )
+
+		# Extract the needed infos from the response and return them
 		wikicode = page[ 'revisions' ][ 0 ][ 'content' ]
 		basetimestamp = page[ 'revisions' ][ 0 ][ 'timestamp' ]
 
 		return ( is_already_present, wtp.parse( wikicode ), basetimestamp )
 
-	#
+	# Try to extract the language section
 	def get_language_section( self, wikicode, language_qid ):
+		# Check if the record's language has a BCP 47 code, stop here if not
 		if language_qid not in self.language_code_map:
 			return None
 
 		lang = self.language_code_map[ language_qid ]
 
+		# Travel across each sections titles to find the one we want
 		for section in wikicode.sections:
 			if section.title.replace( ' ', '' ).lower() == '{{langue|' + lang + '}}':
 				return section
 
+		# If we arrive here, it means that there is no section for
+		# the record's language
 		return None
 
-	#
+	# Try to extract the pronunciation subsection
 	def get_pronunciation_section( self, wikicode ):
 		for section in wikicode.sections:
 			if section.title.replace( ' ', '' ).lower() == '{{s|prononciation}}':
@@ -182,21 +200,27 @@ class FrWiktionary:
 		return None
 
 
-	#
+	# Create a pronunciation subsection
 	def create_pronunciation_section( self, wikicode ):
 		following_sections = [ '{{s|anagrammes}}', '{{s|anagr}}', '{{s|voiraussi}}', '{{s|voir}}', '{{s|références}}', '{{s|réf}}' ]
 
+		# The sections order is fixed, etymology, word type (and it's many
+		# subsections, pronunciation, anagram, see also and references)
+		# Travel across the sections until we find one which comes after
+		# the pronunciation section
 		prev_section = wikicode.sections[ 0 ]
 		for section in wikicode.sections:
 			if section.title.replace( ' ', '' ).lower() in following_sections:
 				break
 			prev_section = section
 
+		# Append an empty pronunication section to the last section which
+		# is not in the following sections list
 		prev_section.contents = self.safe_append_text( prev_section.contents, EMPTY_PRONUNCIATION_SECTION )
 
 		return self.get_pronunciation_section( wikicode )
 
-	#
+	# Add the audio template to the pronunciation section
 	def append_file( self, wikicode, filename, language_qid, location_qid ):
 		section_content = wtp.parse( wikicode.sections[ 1 ].contents )
 
@@ -218,7 +242,7 @@ class FrWiktionary:
 		wikicode.sections[ 1 ].contents = wikicode.sections[ 1 ].contents.replace( '$1\n', '' )
 
 
-	#
+	# Append a string to a wikitext string, but before any category or sortkey
 	def safe_append_text( self, content, text ):
 		content = str( content )
 
@@ -231,7 +255,7 @@ class FrWiktionary:
 		return content[:index] + text + content[index:]
 
 
-	#
+	# edit the page
 	def do_edit( self, pagename, wikicode, basetimestamp ):
 		result = self.api.request( {
 			"action": "edit",
