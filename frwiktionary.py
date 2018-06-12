@@ -13,7 +13,7 @@ from sparql import Sparql
 
 API_ENDPOINT = 'https://fr.wiktionary.org/w/api.php'
 SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql'
-SUMMARY = 'Add an audio pronunciation file from Lingua Libre'
+SUMMARY = 'Ajout d\'un fichier audio de prononciation depuis Lingua Libre'
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = '\n\n=== {{S|prononciation}} ===\n$1'
@@ -104,7 +104,7 @@ class FrWiktionary:
 		# Try to extract the section of the language of the record
 		language_section = self.get_language_section( wikicode, record[ 'language' ][ 'qid' ] )
 
-		# Whether there is no section for the curent language
+		# Whether there is no section for the current language
 		if language_section == None:
 			print(record[ 'id' ] + ': language section not found')
 			return False
@@ -112,7 +112,7 @@ class FrWiktionary:
 		# Try to extract the pronunciation subsection
 		pronunciation_section = self.get_pronunciation_section( language_section )
 
-		# Create the pronunciation section if it doesn't exists
+		# Create the pronunciation section if it doesn't exist
 		if pronunciation_section == None:
 			pronunciation_section = self.create_pronunciation_section( language_section )
 
@@ -130,10 +130,9 @@ class FrWiktionary:
 				raise e
 
 		if result == True:
-			print(record[ 'id' ] + ': added to frwiktionary - https://www.wiktionary.org/wiki/' + transcription)
+			print(record[ 'id' ] + ': added to frwiktionary - https://fr.wiktionary.org/wiki/' + transcription)
 
 		return result
-
 
 
 	"""
