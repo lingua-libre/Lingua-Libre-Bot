@@ -6,11 +6,10 @@
 
 import sys
 import configparser
-import requests
-import json
 import argparse
-import urllib.parse
+import time
 
+from sparql import Sparql
 from wikidata import Wikidata
 
 
@@ -46,48 +45,34 @@ where {
   #filters
 }"""
 
-def format_sparql_result( sparql_result, key ):
-	if key in sparql_result:
-		value = sparql_result[ key ][ 'value' ]
-		if sparql_result[ key ][ 'type' ] == 'uri':
-			if value.startswith( u'https://lingualibre.fr/entity/' ):
-				value = value[30:]
-			if value.startswith( u'http://commons.wikimedia.org/wiki/Special:FilePath/' ):
-				value = urllib.parse.unquote( value[51:] )
-		return value
-	return None
-
 
 def get_records( query ):
-	response = requests.post( ENDPOINT, data={
-		"format": "json",
-		"query": query
-	})
-	raw_records = json.loads(response.text)[ 'results' ][ 'bindings' ]
+	sparql = Sparql(ENDPOINT)
+	raw_records = sparql.request(query)
 	records = []
 	for record in raw_records:
 		records += [{
-			"id":             format_sparql_result( record, 'record' ),
-			"file":           format_sparql_result( record, 'file' ),
-			"date":           format_sparql_result( record, 'date' ),
-			"transcription":  format_sparql_result( record, 'transcription' ),
-			"qualifier":      format_sparql_result( record, 'qualifier' ),
-			"user":           format_sparql_result( record, 'linkeduser' ),
+			"id":             sparql.format_value( record, 'record' ),
+			"file":           sparql.format_value( record, 'file' ),
+			"date":           sparql.format_value( record, 'date' ),
+			"transcription":  sparql.format_value( record, 'transcription' ),
+			"qualifier":      sparql.format_value( record, 'qualifier' ),
+			"user":           sparql.format_value( record, 'linkeduser' ),
 			"speaker": {
-				"id":         format_sparql_result( record, 'speaker' ),
-				"name":       format_sparql_result( record, 'speakerLabel' ),
-				"gender":     format_sparql_result( record, 'gender' ),
-				"residence":  format_sparql_result( record, 'residence' ),
+				"id":         sparql.format_value( record, 'speaker' ),
+				"name":       sparql.format_value( record, 'speakerLabel' ),
+				"gender":     sparql.format_value( record, 'gender' ),
+				"residence":  sparql.format_value( record, 'residence' ),
 			},
 			"links": {
-				"wikidata":   format_sparql_result( record, 'wikidataId' ),
-				"wikipedia":  format_sparql_result( record, 'wikipediaTitle' ),
-				"wiktionary": format_sparql_result( record, 'wiktionaryEntry' ),
+				"wikidata":   sparql.format_value( record, 'wikidataId' ),
+				"wikipedia":  sparql.format_value( record, 'wikipediaTitle' ),
+				"wiktionary": sparql.format_value( record, 'wiktionaryEntry' ),
 			},
 			"language": {
-				"iso":        format_sparql_result( record, 'languageIso' ),
-				"qid":        format_sparql_result( record, 'languageQid' ),
-				"wm":         format_sparql_result( record, 'languageWMCode' ),
+				"iso":        sparql.format_value( record, 'languageIso' ),
+				"qid":        sparql.format_value( record, 'languageQid' ),
+				"wm":         sparql.format_value( record, 'languageWMCode' ),
 
 			}
 		}]

@@ -67,7 +67,11 @@ class Wikidata:
 			print(record[ 'id' ] + ': already on Wikidata')
 			return False
 
-		return self.do_edit( record[ 'links' ][ 'wikidata' ], record[ 'file' ], record[ 'language' ][ 'qid' ], record[ 'id' ] )
+		result = self.do_edit( record[ 'links' ][ 'wikidata' ], record[ 'file' ], record[ 'language' ][ 'qid' ], record[ 'id' ] )
+		if result == True:
+			print(record[ 'id' ] + ': added to Wikidata - https://www.wikidata.org/wiki/' + record[ 'links' ][ 'wikidata' ] + '#' + PRONUNCIATION_PROPERTY)
+
+		return result
 
 
 
