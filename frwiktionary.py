@@ -90,11 +90,7 @@ class FrWiktionary:
 
 		# Whether there is no entry for this record on frwiktionary
 		if wikicode == False:
-			# Retry afer having inverted the case of the first letter
-			transcription = self.invert_case( transcription )
-			( is_already_present, wikicode, basetimestamp ) = self.get_entry( transcription, record[ 'file' ] )
-			if wikicode == False:
-				return False
+			return False
 
 		# Whether the record is already inside the entry
 		if is_already_present == True:
