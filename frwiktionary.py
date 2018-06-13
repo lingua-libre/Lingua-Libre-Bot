@@ -77,10 +77,9 @@ class FrWiktionary:
 		for line in raw_location_map:
 			country = sparql.format_value( line, 'countryLabel' )
 			location = sparql.format_value( line, 'locationLabel' )
+			self.location_map[ sparql.format_value( line, 'location' ) ] = country
 			if country != location:
-				self.location_map[ sparql.format_value( line, 'location' ) ] = location + ' (' + country + ')'
-			else:
-				self.location_map[ sparql.format_value( line, 'location' ) ] = country
+				self.location_map[ sparql.format_value( line, 'location' ) ] += ' (' + location + ')'
 
 		return records
 
