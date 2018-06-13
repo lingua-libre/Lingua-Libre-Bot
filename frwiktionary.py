@@ -19,6 +19,10 @@ SUMMARY = 'Ajout d\'un fichier audio de prononciation depuis Lingua Libre'
 EMPTY_PRONUNCIATION_SECTION = '\n\n=== {{S|prononciation}} ===\n$1'
 PRONUNCIATION_LINE = '\n* {{écouter|lang=$2|$3|audio=$1}}'
 
+# To be sure not to miss any title, they are normalized during comparaisons;
+# those listed bellow must thereby be in lower case and without any space
+FOLLOWING_SECTIONS = [ '{{s|anagrammes}}', '{{s|anagr}}', '{{s|voiraussi}}', '{{s|voir}}', '{{s|références}}', '{{s|réf}}' ]
+
 LANGUAGE_QUERY = 'SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }'
 LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
@@ -204,15 +208,13 @@ class FrWiktionary:
 
 	# Create a pronunciation subsection
 	def create_pronunciation_section( self, wikicode ):
-		following_sections = [ '{{s|anagrammes}}', '{{s|anagr}}', '{{s|voiraussi}}', '{{s|voir}}', '{{s|références}}', '{{s|réf}}' ]
-
 		# The sections order is fixed, etymology, word type (and it's many
 		# subsections, pronunciation, anagram, see also and references)
 		# Travel across the sections until we find one which comes after
 		# the pronunciation section
 		prev_section = wikicode.sections[ 0 ]
 		for section in wikicode.sections:
-			if section.title.replace( ' ', '' ).lower() in following_sections:
+			if section.title.replace( ' ', '' ).lower() in FOLLOWING_SECTIONS:
 				break
 			prev_section = section
 
