@@ -139,7 +139,7 @@ def main():
 	for record in records:
 		for dbname in supported_wikis:
 			if supported_wikis[ dbname ].execute( record ):
-				time.sleep(30)
+				time.sleep(1)
 
 	print(len(records))
 

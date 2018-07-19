@@ -96,13 +96,13 @@ class Wikidata:
 		connections = {}
 		if 'entities' in response:
 			for qid in response[ 'entities' ]:
-				if 'labels' in response[ 'entities' ][ qid ]:
+				if 'labels' in response[ 'entities' ][ qid ] and lang in response[ 'entities' ][ qid ][ 'labels' ]:
 					title = response[ 'entities' ][ qid ][ 'sitelinks' ][ dbname ][ 'title' ]
 					label = response[ 'entities' ][ qid ][ 'labels' ][ lang ][ 'value' ]
 
 					# Only make a connections if the WP title is equal to
 					# the label on Wikidata
-					if BRACKET_REGEX.sub( '', title ).lower() == label.lower():
+					if BRACKET_REGEX.sub( '', title ).lower() == BRACKET_REGEX.sub( '', label ).lower():
 						connections[ lang + ':' + title ] = qid
 					else:
 						print( 'Title and label diverge: ' + qid + ' - ' + BRACKET_REGEX.sub( '', title ).lower() + ' - ' + label.lower() )
