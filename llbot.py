@@ -108,7 +108,7 @@ def main():
 	# Add some filters depending on the fetched arguments
 	filters = ""
 	if args.item != None:
-		filters = 'BIND( entity:' + args.item + ' as ?record ).'
+		filters = 'VALUES ?record {entity:' + ' entity:'.join( args.item.split( ',' ) ) + '}.'
 	else:
 		if args.startdate != None:
 			filters = 'FILTER( ?date > "' + args.startdate + '"^^xsd:dateTime ).'
