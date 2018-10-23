@@ -8,6 +8,9 @@ import sys
 import configparser
 import argparse
 import time
+import datetime
+import requests
+import json
 
 from sparql import Sparql
 
@@ -19,6 +22,7 @@ config = configparser.ConfigParser()
 config.read("./config.ini")
 
 ENDPOINT = "https://lingualibre.fr/bigdata/namespace/wdq/sparql"
+API = 'https://lingualibre.fr/api.php'
 BASEQUERY = """select distinct ?record ?file ?speaker ?speakerLabel ?date ?transcription ?qualifier ?wikidataId ?wikipediaTitle ?wiktionaryEntry ?languageIso ?languageQid ?languageWMCode ?linkeduser ?gender ?residence
 where {
   ?record prop:P2 entity:Q2 .
@@ -83,8 +87,40 @@ def get_records( query ):
 
 
 def live_mode(args, supported_wikis):
-    #TODO: do stuff
-    return
+    delay = 10 #TODO: make a parameter for this
+    prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+    prev_items = set()
+    while True:
+        start_time = time.time()
+
+        r = requests.get(API, {
+	        "action": "query",
+	        "format": "json",
+	        "list": "recentchanges",
+	        "rcstart": prev_timestamp,
+	        "rcdir": "newer",
+	        "rcnamespace": "0",
+	        "rcprop": "title|timestamp|ids",
+	        "rclimit": "500",
+	        "rctype": "new"
+        })
+        data = json.loads(r.text)['query']['recentchanges']
+
+        new_items = set()
+        for rc in data:
+            new_items.add(rc['title'])
+            prev_timestamp = rc['timestamp']
+
+        if len(new_items-prev_items) > 0:
+            args.item = ','.join(new_items-prev_items)
+            simple_mode(args, supported_wikis)
+
+        prev_items = new_items
+
+        # Pause the bot if we've not already spend too much time
+        time_to_wait = delay - (time.time() - start_time)
+        if time_to_wait > 0:
+            time.sleep(time_to_wait)
 
 
 def simple_mode(args, supported_wikis):
@@ -153,7 +189,6 @@ def main():
 
 	# Parse the command-line arguments
 	args = parser.parse_args()
-
 
 	# Filter the wikis depending on the fetched arguments
 	if args.wiki != None:
