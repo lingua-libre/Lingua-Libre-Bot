@@ -87,7 +87,7 @@ def get_records( query ):
 
 
 def live_mode(args, supported_wikis):
-    delay = 10 #TODO: make a parameter for this
+    delay = args.delay #TODO: make a parameter for this
     prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
     prev_items = set()
     while True:
@@ -172,12 +172,8 @@ def main():
 	parser.add_argument('--wiki', help='run only on the selected wiki', choices=list( supported_wikis.keys() ))
 	subparsers = parser.add_subparsers(title='Execution modes')
 
-	liveparser = subparsers.add_parser('live', help='Run llbot in (hardly) real time based on Recent Changes.')
-	liveparser.set_defaults(func=live_mode)
-
-	simpleparser = subparsers.add_parser('simple', help='Run llbot on (a subset of) all items.')
+	simpleparser = subparsers.add_parser('simple', help='Run llbot on (a subset of) all items')
 	simpleparser.set_defaults(func=simple_mode)
-
 	simpleparser.add_argument('--item', help='run only on the given item')
 	simpleparser.add_argument('--startdate', help='from which timestamp to start')
 	simpleparser.add_argument('--enddate', help='at which timestamp to end')
@@ -186,6 +182,10 @@ def main():
 	langgroup.add_argument('--lang', help='run only on records from the given language, identified by its lingua libre qid')
 	langgroup.add_argument('--langiso', help='run only on records from the given language, identified by its iso 693-3 code')
 	langgroup.add_argument('--langwm', help='run only on records from the given language, identified by its wikimedia code')
+
+	liveparser = subparsers.add_parser('live', help='Run llbot in (hardly) real time based on Recent Changes')
+	liveparser.set_defaults(func=live_mode)
+	liveparser.add_argument('--delay', help='duration in seconds to wait between 2 recent changes check (default: 10)', type=int, default=10)
 
 	# Parse the command-line arguments
 	args = parser.parse_args()
