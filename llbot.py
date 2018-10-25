@@ -87,8 +87,8 @@ def get_records( query ):
 
 
 def live_mode(args, supported_wikis):
-    delay = args.delay 
-    prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+    delay = args.delay
+    prev_timestamp = (datetime.datetime.utcnow()-datetime.timedelta(seconds=args.backcheck)).replace(microsecond=0).isoformat() + 'Z'
     prev_items = set()
     items = set()
     while True:
@@ -190,6 +190,7 @@ def main():
 	liveparser = subparsers.add_parser('live', help='Run llbot in (hardly) real time based on Recent Changes')
 	liveparser.set_defaults(func=live_mode)
 	liveparser.add_argument('--delay', help='duration in seconds to wait between 2 recent changes check (default: 10)', type=int, default=10)
+	liveparser.add_argument('--backcheck', help='check at launch recent changes in the last BACKCHECK seconds (default: 0)', type=int, default=0)
 
 	# Parse the command-line arguments
 	args = parser.parse_args()
