@@ -87,9 +87,10 @@ def get_records( query ):
 
 
 def live_mode(args, supported_wikis):
-    delay = args.delay #TODO: make a parameter for this
+    delay = args.delay 
     prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
     prev_items = set()
+    items = set()
     while True:
         start_time = time.time()
 
@@ -102,20 +103,23 @@ def live_mode(args, supported_wikis):
 	        "rcnamespace": "0",
 	        "rcprop": "title|timestamp|ids",
 	        "rclimit": "500",
-	        "rctype": "new"
+	        "rctype": "new|edit"
         })
         data = json.loads(r.text)['query']['recentchanges']
 
-        new_items = set()
         for rc in data:
-            new_items.add(rc['title'])
+            items.add(rc['title'])
             prev_timestamp = rc['timestamp']
 
-        if len(new_items-prev_items) > 0:
-            args.item = ','.join(new_items-prev_items)
-            simple_mode(args, supported_wikis)
+        if len(items-prev_items) > 0:
+            args.item = ','.join(items-prev_items)
+            prev_items = set(simple_mode(args, supported_wikis))
+            print(len(prev_items))
 
-        prev_items = new_items
+        items = items - prev_items
+
+        if len(items) > 0:
+            print('Remaining items: '+ ','.join(items))
 
         # Pause the bot if we've not already spend too much time
         time_to_wait = delay - (time.time() - start_time)
@@ -156,7 +160,7 @@ def simple_mode(args, supported_wikis):
 			if supported_wikis[ dbname ].execute( record ):
 				time.sleep(1)
 
-	print(len(records))
+	return [record['id'] for record in records]
 
 
 # Main
@@ -196,8 +200,8 @@ def main():
 		supported_wikis = { args.wiki: tmp }
 
     # Start the bot in the selected mode (simple or live)
-	args.func(args, supported_wikis)
-
+	items = args.func(args, supported_wikis)
+	print(len(items))
 
 
 if __name__ == '__main__':
