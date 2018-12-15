@@ -21,9 +21,8 @@ class Sparql:
 			"format": "json",
 			"query": query
 		})
-		response = requests.utils.get_unicode_from_response(response).decode('utf-8')
 
-		return json.loads( response )[ 'results' ][ 'bindings' ]
+		return json.loads( response.text )[ 'results' ][ 'bindings' ]
 
 	def format_value( self, sparql_result, key ):
 		if key in sparql_result:
