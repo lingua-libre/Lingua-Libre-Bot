@@ -11,6 +11,18 @@ Lingua Libre Bot requires python3.5 to work, and the following packages in their
 * re
 * uuid
 
+
+### Installation
+Install the aforementioned packages: 
+<pre>pip install -r requirements.txt</pre>
+
+Copy the configuration file and edit it with your information:
+<pre>
+  cp config.ini.sample config.ini
+  vi config.ini
+</pre>
+
+
 ### Usage
 <pre>usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
                 [--user USER]

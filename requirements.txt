@@ -1,0 +1,4 @@
+wikitextparser
+requests
+argparse
+uuid
