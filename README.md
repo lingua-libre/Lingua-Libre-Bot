@@ -1,5 +1,5 @@
 # Lingua-Libre-Bot
-This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), who's goal is to ease the resuse of all the records made on [Lingua Libre](https://lingualibre.fr) on as much wikis as possible.
+This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), whose goal is to ease the resuse of all the records made on [Lingua Libre](https://lingualibre.fr) on as much wikis as possible.
 
 ### Dependencies
 Lingua Libre Bot requires python3.5 to work, and the following packages in their latest version:
