@@ -20,8 +20,8 @@ BRACKET_REGEX = re.compile(r" \([^(]+\)$")
 class Wikidata:
 
     """
-	Constructor
-	"""
+    Constructor
+    """
 
     def __init__(self, user, password):
         self.user = user
@@ -29,8 +29,8 @@ class Wikidata:
         self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
 
     """
-	Public methods
-	"""
+    Public methods
+    """
 
     # Prepare all the records for their use on Wikidata
     # If a record is linked to an article on Wikipedia but has no linked QID
@@ -39,8 +39,8 @@ class Wikidata:
         links = {}
         for record in records:
             if (
-                record["links"]["wikidata"] == None
-                and record["links"]["wikipedia"] != None
+                record["links"]["wikidata"] is None
+                and record["links"]["wikipedia"] is not None
             ):
                 (lang, title) = record["links"]["wikipedia"].split(":", 1)
                 if lang not in links:
@@ -58,8 +58,8 @@ class Wikidata:
 
         for record in records:
             if (
-                record["links"]["wikidata"] == None
-                and record["links"]["wikipedia"] != None
+                record["links"]["wikidata"] is None
+                and record["links"]["wikipedia"] is not None
             ):
                 if record["links"]["wikipedia"] in connections:
                     record["links"]["wikidata"] = connections[
@@ -71,7 +71,7 @@ class Wikidata:
         # Try to use the given record on Wikidata
 
     def execute(self, record):
-        if record["links"]["wikidata"] == None:
+        if record["links"]["wikidata"] is None:
             return False
 
         if self.is_already_present(record["links"]["wikidata"], record["file"]):
@@ -84,7 +84,7 @@ class Wikidata:
             record["language"]["qid"],
             record["id"],
         )
-        if result == True:
+        if result is True:
             print(
                 record["id"]
                 + ": added to Wikidata - https://www.wikidata.org/wiki/"
@@ -96,8 +96,8 @@ class Wikidata:
         return result
 
     """
-	Private methods
-	"""
+    Private methods
+    """
 
     # Try to find the corresponding Wikidata ids of titles (50 max), given
     # the wiki they belong and their language code
