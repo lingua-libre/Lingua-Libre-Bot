@@ -153,9 +153,9 @@ class FrWiktionary:
 
         if result is True:
             print(
-                record["id"] +
-                ": added to frwiktionary - https://fr.wiktionary.org/wiki/" +
-                transcription
+                record["id"]
+                + ": added to frwiktionary - https://fr.wiktionary.org/wiki/"
+                + transcription
             )
 
         return result

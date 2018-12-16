@@ -57,7 +57,7 @@ class Lexemes:
             print(
                 record["id"]
                 + ": added to Wikidata - https://www.wikidata.org/wiki/Lexeme:"
-                + record["links"]["lexeme"].replace("-","#")
+                + record["links"]["lexeme"].replace("-", "#")
             )
 
         return result

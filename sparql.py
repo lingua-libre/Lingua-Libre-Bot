@@ -19,9 +19,7 @@ class Sparql:
         self.endpoint = endpoint
 
     def request(self, query):
-        response = requests.post(self.endpoint, data={
-            "format": "json",
-            "query": query})
+        response = requests.post(self.endpoint, data={"format": "json", "query": query})
 
         return json.loads(response.text)["results"]["bindings"]
 
