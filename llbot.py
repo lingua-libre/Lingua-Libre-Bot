@@ -25,7 +25,7 @@ API = "https://lingualibre.fr/api.php"
 BASEQUERY = """
 SELECT DISTINCT
     ?record ?file ?speaker ?speakerLabel ?date ?transcription
-    ?qualifier ?wikidataId ?wikipediaTitle ?wiktionaryEntry
+    ?qualifier ?wikidataId ?lexemeId ?wikipediaTitle ?wiktionaryEntry
     ?languageIso ?languageQid ?languageWMCode ?linkeduser
     ?gender ?residence
 WHERE {
@@ -37,6 +37,7 @@ WHERE {
   ?record prop:P7 ?transcription .
   OPTIONAL { ?record prop:P18 ?qualifier . }
   OPTIONAL { ?record prop:P12 ?wikidataId . }
+  OPTIONAL { ?record prop:P21 ?lexemeId . }
   OPTIONAL { ?record prop:P19 ?wikipediaTitle . }
   OPTIONAL { ?record prop:P20 ?wiktionaryEntry . }
 
@@ -77,6 +78,7 @@ def get_records(query):
                 },
                 "links": {
                     "wikidata": sparql.format_value(record, "wikidataId"),
+                    "lexeme": sparql.format_value(record, "lexemeId"),
                     "wikipedia": sparql.format_value(record, "wikipediaTitle"),
                     "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
                 },
