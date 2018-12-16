@@ -15,6 +15,7 @@ from sparql import Sparql
 
 from wikidata import Wikidata
 from frwiktionary import FrWiktionary
+from ocwiktionary import OcWiktionary
 
 
 config = configparser.ConfigParser()
@@ -186,6 +187,7 @@ def main():
         "frwiktionary": FrWiktionary(
             config.get("wiki", "user"), config.get("wiki", "password")
         ),
+		'ocwiktionary': OcWiktionary( config.get( 'wiki', 'user' ), config.get( 'wiki', 'password' ) )
     }
 
     # Declare the command-line arguments
