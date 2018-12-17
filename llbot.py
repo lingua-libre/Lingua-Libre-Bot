@@ -13,10 +13,10 @@ import json
 
 from sparql import Sparql
 
-from wikidata import Wikidata
-from frwiktionary import FrWiktionary
-from ocwiktionary import OcWiktionary
-from lexemes import Lexemes
+from wikis.wikidata import Wikidata
+from wikis.frwiktionary import FrWiktionary
+from wikis.ocwiktionary import OcWiktionary
+from wikis.lexemes import Lexemes
 
 
 config = configparser.ConfigParser()
