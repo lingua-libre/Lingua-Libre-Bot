@@ -10,7 +10,6 @@ import uuid
 
 API_ENDPOINT = "https://www.wikidata.org/w/api.php"
 PRONUNCIATION_PROPERTY = "P443"
-LANG_PROPERTY = "P407"
 REFURL_PROPERTY = "P854"
 SUMMARY = "Add an audio pronunciation file from Lingua Libre"
 BRACKET_REGEX = re.compile(r" \([^(]+\)$")
@@ -50,7 +49,6 @@ class Lexemes:
         result = self.do_edit(
             record["links"]["lexeme"],
             record["file"],
-            record["language"]["qid"],
             record["id"],
         )
         if result is True:
@@ -84,7 +82,7 @@ class Lexemes:
 
         # Add the given record in a new claim of the given item
 
-    def do_edit(self, entityId, filename, language, lingualibreId):
+    def do_edit(self, entityId, filename, lingualibreId):
         response = self.api.request(
             {
                 "action": "wbsetclaim",
@@ -97,13 +95,7 @@ class Lexemes:
                 + entityId
                 + "$"
                 + str(uuid.uuid4())
-                + '","qualifiers":{"'
-                + LANG_PROPERTY
-                + '":[{"snaktype":"value","property":"'
-                + LANG_PROPERTY
-                + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
-                + language
-                + '"}}}]},"references":[{"snaks":{"'
+                + '","qualifiers":{},"references":[{"snaks":{"'
                 + REFURL_PROPERTY
                 + '":[{"snaktype":"value","property":"'
                 + REFURL_PROPERTY
