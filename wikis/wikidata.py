@@ -33,9 +33,28 @@ class Wikidata:
     """
 
     # Prepare all the records for their use on Wikidata
-    # If a record is linked to an article on Wikipedia but has no linked QID
-    # we try to
+
     def prepare(self, records):
+        # Resolve all redirects
+        qids = []
+        redirects = {}
+        for record in records:
+            if record["links"]["wikidata"] is not None:
+                qids += [record["links"]["wikidata"]]
+        while len(qids) > 0:
+            redirects = {
+                **redirects,
+                **self.resolve_redirects(qids[:50])
+            }
+            qids = qids[50:]
+        for record in records:
+            if record["links"]["wikidata"] is not None:
+                qid = record["links"]["wikidata"]
+                if qid in redirects:
+                    record["links"]["wikidata"] = redirects[qid]
+
+        # If a record is linked to an article on Wikipedia but has no linked QID
+        # we try to get it through sitelinks
         links = {}
         for record in records:
             if (
@@ -98,6 +117,25 @@ class Wikidata:
     """
     Private methods
     """
+
+    # Find out if the given items are redirects or not
+    def resolve_redirects(self, qids):
+        response = self.api.request(
+            {
+                "action": "wbgetentities",
+                "format": "json",
+                "ids": "|".join(qids),
+                "props": "info"
+            }
+        )
+
+        redirects = {}
+        if "entities" in response:
+            for qid in response["entities"]:
+                if "redirects" in response["entities"][qid]:
+                    redirects[qid] = response["entities"][qid]["redirects"]["to"]
+
+        return redirects
 
     # Try to find the corresponding Wikidata ids of titles (50 max), given
     # the wiki they belong and their language code
