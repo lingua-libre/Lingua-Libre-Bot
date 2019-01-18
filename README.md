@@ -10,6 +10,7 @@ Lingua Libre Bot requires python3.5 to work, and the following packages in their
 * urllib
 * re
 * uuid
+* backoff
 
 
 ### Installation

@@ -7,7 +7,7 @@
 import requests
 import json
 import urllib.parse
-
+import backoff
 
 class Sparql:
 
@@ -18,6 +18,7 @@ class Sparql:
     def __init__(self, endpoint):
         self.endpoint = endpoint
 
+    @backoff.on_exception(backoff.expo, (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError, json.decoder.JSONDecodeError), max_tries=8)
     def request(self, query):
         response = requests.post(self.endpoint, data={"format": "json", "query": query})
 
