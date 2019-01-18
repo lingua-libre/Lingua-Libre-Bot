@@ -10,6 +10,7 @@ import time
 import datetime
 import requests
 import json
+import os
 
 from sparql import Sparql
 
@@ -20,7 +21,7 @@ from wikis.lexemes import Lexemes
 
 
 config = configparser.ConfigParser()
-config.read("./config.ini")
+config.read(os.path.dirname(os.path.realpath(__file__))+"/config.ini")
 
 ENDPOINT = "https://lingualibre.fr/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.fr/api.php"
