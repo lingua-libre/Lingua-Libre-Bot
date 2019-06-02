@@ -271,11 +271,13 @@ class FrWiktionary:
         if location_qid in self.location_map:
             location = self.location_map[location_qid]
 
+        pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[language_qid]).replace("$3", location)
+        if len(section_content.sections) > 1:
+            pronunciation_line += "\n\n"
+
         section_content.sections[0].contents = self.safe_append_text(
             section_content.sections[0].contents,
-            PRONUNCIATION_LINE.replace("$1", filename)
-            .replace("$2", self.language_code_map[language_qid])
-            .replace("$3", location),
+            pronunciation_line,
         )
 
         wikicode.sections[1].contents = str(section_content)
