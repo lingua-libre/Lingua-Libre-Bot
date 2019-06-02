@@ -14,6 +14,7 @@ class Pywiki:
         self.user = user
         self.basic_user_name = self.user.split("@")[0]
         self.password = password
+        self.dry_run = False
         self.api_endpoint = api_endpoint
         self.assertion = assertion
         if self.assertion == "bot":
@@ -23,12 +24,19 @@ class Pywiki:
 
         self.session = requests.Session()
 
+    def set_dry_run(self, dry_run):
+        self.dry_run = dry_run
+
     """
     Perform a given request with a simple but usefull error managment
     """
 
     @backoff.on_exception(backoff.expo, (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError, json.decoder.JSONDecodeError), max_tries=8)
     def request(self, data, files=None):
+        if self.dry_run == True and data["action"] != "query":
+            print(data)
+            return {"dryrun": True}
+
         relogin = 3
         while relogin:
             try:

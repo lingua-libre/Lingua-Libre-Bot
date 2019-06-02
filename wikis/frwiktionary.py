@@ -55,10 +55,15 @@ class FrWiktionary:
         self.user = user
         self.password = password
         self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
+        self.dry_run = False
 
     """
     Public methods
     """
+
+    def set_dry_run(self):
+        self.dry_run = True
+        self.api.set_dry_run(True)
 
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)

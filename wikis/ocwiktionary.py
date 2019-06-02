@@ -31,10 +31,10 @@ FOLLOWING_SECTIONS = [
 ]
 
 LANGUAGE_QUERY = """
-SELECT ?item ?code ?itemLabel 
-WHERE { 
-	?item wdt:P305 ?code.
-  	SERVICE wikibase:label { bd:serviceParam wikibase:language "oc, en" . }
+SELECT ?item ?code ?itemLabel
+WHERE {
+    ?item wdt:P305 ?code.
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "oc, en" . }
 }
 """
 LOCATION_QUERY = """
@@ -55,17 +55,22 @@ BOTTOM_REGEX = re.compile(
 class OcWiktionary:
 
     """
-	Constructor
-	"""
+    Constructor
+    """
 
     def __init__(self, user, password):
         self.user = user
         self.password = password
         self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
+        self.dry_run = False
 
     """
-	Public methods
-	"""
+    Public methods
+    """
+
+    def set_dry_run(self):
+        self.dry_run = True
+        self.api.set_dry_run(True)
 
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by ocwiktionary)
@@ -240,8 +245,8 @@ class OcWiktionary:
         return result
 
     """
-	Private methods
-	"""
+    Private methods
+    """
 
     # Normalize the transcription to fit ocwiktionary's title conventions
     def normalize(self, transcription):

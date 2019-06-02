@@ -204,6 +204,11 @@ def main():
         help="run only on the selected wiki",
         choices=list(supported_wikis.keys()),
     )
+    parser.add_argument(
+        "--dryrun",
+        action='store_true',
+        help="show the result without actually doing any edit"
+    )
     subparsers = parser.add_subparsers(title="Execution modes")
 
     simpleparser = subparsers.add_parser(
@@ -253,7 +258,11 @@ def main():
         tmp = supported_wikis[args.wiki]
         supported_wikis = {args.wiki: tmp}
 
-        # Start the bot in the selected mode (simple or live)
+    if args.dryrun is not None:
+        for dbname in supported_wikis:
+            supported_wikis[dbname].set_dry_run()
+
+    # Start the bot in the selected mode (simple or live)
     items = args.func(args, supported_wikis)
     print(len(items))
 
