@@ -16,7 +16,7 @@ SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
-PRONUNCIATION_LINE = "\n* {{écouter|lang=$2|$3|audio=$1}}"
+PRONUNCIATION_LINE = "\n* {{écouter|lang=$2|$3||audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparaisons;
 # those listed bellow must thereby be in lower case and without any space
