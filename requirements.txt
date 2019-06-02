@@ -2,3 +2,4 @@ wikitextparser
 requests
 argparse
 uuid
+backoff
