@@ -258,7 +258,7 @@ def main():
         tmp = supported_wikis[args.wiki]
         supported_wikis = {args.wiki: tmp}
 
-    if args.dryrun is not None:
+    if args.dryrun == True:
         for dbname in supported_wikis:
             supported_wikis[dbname].set_dry_run()
 
