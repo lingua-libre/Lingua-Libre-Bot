@@ -43,6 +43,7 @@ BOTTOM_REGEX = re.compile(
     r"(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
+SANITIZE_REGEX = re.compile(r"== +\n")
 
 
 class FrWiktionary:
@@ -116,12 +117,12 @@ class FrWiktionary:
         if wikicode is False:
             return False
 
-            # Whether the record is already inside the entry
+        # Whether the record is already inside the entry
         if is_already_present is True:
             print(record["id"] + ": already on frwiktionary")
             return False
 
-            # Try to extract the section of the language of the record
+        # Try to extract the section of the language of the record
         language_section = self.get_language_section(
             wikicode, record["language"]["qid"]
         )
@@ -131,14 +132,14 @@ class FrWiktionary:
             print(record["id"] + ": language section not found")
             return False
 
-            # Try to extract the pronunciation subsection
+        # Try to extract the pronunciation subsection
         pronunciation_section = self.get_pronunciation_section(language_section)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
-            # Add the pronunciation file to the pronunciation section
+        # Add the pronunciation file to the pronunciation section
         self.append_file(
             pronunciation_section,
             record["file"],
@@ -173,8 +174,7 @@ class FrWiktionary:
     def normalize(self, transcription):
         return transcription.replace("'", "’")
 
-        # Invert the case of the first letter of the given string
-
+    # Invert the case of the first letter of the given string
     def invert_case(self, text):
         if text[0].isupper():
             text = text[0].lower() + text[1:]
@@ -183,9 +183,8 @@ class FrWiktionary:
 
         return text
 
-        # Fetch the contents of the given Wiktionary entry,
-        # and check by the way whether the file is already in it.
-
+    # Fetch the contents of the given Wiktionary entry,
+    # and check by the way whether the file is already in it.
     def get_entry(self, pagename, filename):
         response = self.api.request(
             {
@@ -204,18 +203,21 @@ class FrWiktionary:
         if "missing" in page:
             return (False, False, 0)
 
-            # If there is the 'images' key, this means that the API has found
-            # the file at least once in the page, see [[:mw:API:Images]]
+        # If there is the 'images' key, this means that the API has found
+        # the file at least once in the page, see [[:mw:API:Images]]
         is_already_present = "images" in page
 
         # Extract the needed infos from the response and return them
         wikicode = page["revisions"][0]["content"]
         basetimestamp = page["revisions"][0]["timestamp"]
 
+        # Sanitize the wikicode to avoid edge cases later on
+        wikicode = SANITIZE_REGEX.sub('==\n', wikicode)
+
+
         return (is_already_present, wtp.parse(wikicode), basetimestamp)
 
-        # Try to extract the language section
-
+    # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
@@ -254,8 +256,8 @@ class FrWiktionary:
                 break
             prev_section = section
 
-            # Append an empty pronunication section to the last section which
-            # is not in the following sections list
+        # Append an empty pronunication section to the last section which
+        # is not in the following sections list
         prev_section.contents = self.safe_append_text(
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION
         )
@@ -287,8 +289,7 @@ class FrWiktionary:
             "$1\n", ""
         )
 
-        # Append a string to a wikitext string, but before any category or sortkey
-
+    # Append a string to a wikitext string, but before any category or sortkey
     def safe_append_text(self, content, text):
         content = str(content)
 
