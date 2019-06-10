@@ -8,6 +8,7 @@ import time
 import json
 import requests
 import backoff
+from version import __version__
 
 class Pywiki:
     def __init__(self, user, password, api_endpoint, assertion):
@@ -23,6 +24,8 @@ class Pywiki:
             self.limit = 500
 
         self.session = requests.Session()
+        self.session.headers.update({'User-Agent': 'Lingua Libre Bot/' + __version__ +  ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})
+
 
     def set_dry_run(self, dry_run):
         self.dry_run = dry_run
