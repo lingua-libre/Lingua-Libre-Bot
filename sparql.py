@@ -28,7 +28,7 @@ class Sparql:
         if key in sparql_result:
             value = sparql_result[key]["value"]
             if sparql_result[key]["type"] == "uri":
-                if value.startswith(u"https://lingualibre.fr/entity/"):
+                if value.startswith(u"https://lingualibre.org/entity/"):
                     value = value[30:]
                 if value.startswith(u"http://www.wikidata.org/entity/"):
                     value = value[31:]

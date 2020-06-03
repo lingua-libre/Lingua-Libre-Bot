@@ -230,7 +230,7 @@ class Wikidata:
                 + REFURL_PROPERTY
                 + '":[{"snaktype":"value","property":"'
                 + REFURL_PROPERTY
-                + '","datavalue":{"type":"string","value":"https://lingualibre.fr/wiki/'
+                + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
                 + lingualibreId
                 + '"}}]}}],"rank":"normal"}',
                 "summary": SUMMARY,

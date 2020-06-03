@@ -23,8 +23,8 @@ from wikis.lexemes import Lexemes
 config = configparser.ConfigParser()
 config.read(os.path.dirname(os.path.realpath(__file__))+"/config.ini")
 
-ENDPOINT = "https://lingualibre.fr/bigdata/namespace/wdq/sparql"
-API = "https://lingualibre.fr/api.php"
+ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
+API = "https://lingualibre.org/api.php"
 BASEQUERY = """
 SELECT DISTINCT
     ?record ?file ?speaker ?speakerLabel ?date ?transcription
