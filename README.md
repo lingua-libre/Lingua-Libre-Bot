@@ -42,4 +42,5 @@ optional arguments:
                         identified by its iso 693-3 code
   --langwm LANGWM       run only on records from the given language,
                         identified by its wikimedia language code
+  --dryrun              run without applying any changes to the wiki
 </pre>
