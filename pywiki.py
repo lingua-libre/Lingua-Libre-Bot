@@ -1,6 +1,6 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Autor: Antoine "0x010C" Lamielle
+# Author: Antoine "0x010C" Lamielle
 # Date: 18 March 2016
 # License: GNU GPL v2+
 
@@ -9,6 +9,7 @@ import json
 import requests
 import backoff
 from version import __version__
+
 
 class Pywiki:
     def __init__(self, user, password, api_endpoint, assertion):
@@ -25,7 +26,6 @@ class Pywiki:
 
         self.session = requests.Session()
         self.session.headers.update({'User-Agent': 'Lingua Libre Bot/' + __version__ +  ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})
-
 
     def set_dry_run(self, dry_run):
         self.dry_run = dry_run
@@ -62,11 +62,11 @@ class Pywiki:
                 relogin -= 1
         raise Exception("API error", response["error"])
 
-    """
-    Login into the wiki
-    """
-
-    def login(self):
+    def login(self) -> int:
+        """
+        Login into the wiki
+        :returns:
+        """
         r = self.session.post(
             self.api_endpoint,
             data={
@@ -94,7 +94,6 @@ class Pywiki:
     """
     Get a crsf token from frwiki to be able to edit a page
     """
-
     def get_csrf_token(self):
         r = self.request(
             {

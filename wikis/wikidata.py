@@ -1,10 +1,9 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Autor: Antoine "0x010C" Lamielle
+# Author: Antoine "0x010C" Lamielle
 # Date: 9 June 2018
 # License: GNU GPL v2+
 
-import sys
 import re
 import pywiki
 import uuid

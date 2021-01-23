@@ -10,7 +10,7 @@ Lingua Libre Bot requires Python 3.8 to work, and the following packages in thei
 * backoff
 
 
-### Installation
+## Installation
 Install the aforementioned packages:
 <pre>pip install -r requirements.txt</pre>
 
@@ -21,7 +21,7 @@ Copy the configuration file and edit it with your information:
 </pre>
 
 
-### Usage
+## Usage
 <pre>usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
                 [--user USER]
                 [--lang LANG | --langiso LANGISO | --langwm LANGWM]

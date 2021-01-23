@@ -1,6 +1,6 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Autor: Antoine "0x010C" Lamielle
+# Author: Antoine "0x010C" Lamielle
 # Date: 9 June 2018
 # License: GNU GPL v2+
 
@@ -47,7 +47,6 @@ SANITIZE_REGEX = re.compile(r"== +\n")
 
 
 class FrWiktionary:
-
     """
     Constructor
     """
@@ -97,7 +96,7 @@ class FrWiktionary:
             self.location_map[sparql.format_value(line, "location")] = country
             if country != location:
                 self.location_map[sparql.format_value(line, "location")] += (
-                    " (" + location + ")"
+                        " (" + location + ")"
                 )
 
         return records
@@ -201,7 +200,7 @@ class FrWiktionary:
 
         # If no pages have been found on this wiki for the given title
         if "missing" in page:
-            return (False, False, 0)
+            return False, False, 0
 
         # If there is the 'images' key, this means that the API has found
         # the file at least once in the page, see [[:mw:API:Images]]
@@ -214,8 +213,7 @@ class FrWiktionary:
         # Sanitize the wikicode to avoid edge cases later on
         wikicode = SANITIZE_REGEX.sub('==\n', wikicode)
 
-
-        return (is_already_present, wtp.parse(wikicode), basetimestamp)
+        return is_already_present, wtp.parse(wikicode), basetimestamp
 
     # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):
@@ -273,7 +271,8 @@ class FrWiktionary:
         if location_qid in self.location_map:
             location = self.location_map[location_qid]
 
-        pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[language_qid]).replace("$3", location)
+        pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
+            language_qid]).replace("$3", location)
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 

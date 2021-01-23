@@ -1,6 +1,6 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Autor: Sylvain Boissel
+# Author: Sylvain Boissel
 # Date: 16 December 2018
 # License: GNU GPL v2+
 

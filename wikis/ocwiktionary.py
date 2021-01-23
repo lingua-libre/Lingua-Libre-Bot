@@ -1,10 +1,9 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Autor: Aure Séguier "Unuaiga"
+# Author: Aure Séguier "Unuaiga"
 # Date: 16 december 2018
 # License: GNU GPL v2+
 
-import sys
 import re
 import pywiki
 import wikitextparser as wtp
