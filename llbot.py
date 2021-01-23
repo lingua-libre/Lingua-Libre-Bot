@@ -8,7 +8,7 @@ import configparser
 import argparse
 import os
 
-from sparql import Sparql
+import lili
 
 from wikis.wikidata import Wikidata
 from wikis.frwiktionary import FrWiktionary
@@ -54,7 +54,7 @@ def main():
     simpleparser = subparsers.add_parser(
         "simple", help="Run llbot on (a subset of) all items"
     )
-    simpleparser.set_defaults(func=simple_mode)
+    simpleparser.set_defaults(func=lili.simple_mode)
     simpleparser.add_argument("--item", help="run only on the given item")
     simpleparser.add_argument("--startdate", help="from which timestamp to start")
     simpleparser.add_argument("--enddate", help="at which timestamp to end")
@@ -76,7 +76,7 @@ def main():
     liveparser = subparsers.add_parser(
         "live", help="Run llbot in (hardly) real time based on Recent Changes"
     )
-    liveparser.set_defaults(func=live_mode)
+    liveparser.set_defaults(func=lili.live_mode)
     liveparser.add_argument(
         "--delay",
         help="duration in seconds to wait between 2 recent changes check (default: 10)",
