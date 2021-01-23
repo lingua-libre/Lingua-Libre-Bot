@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
 # Autor: Aure Séguier "Unuaiga"
 # Date: 16 december 2018

@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
 # Autor: Antoine "0x010C" Lamielle
 # Date: 18 March 2016
