@@ -9,8 +9,8 @@ import pywiki
 import wikitextparser as wtp
 
 from sparql import Sparql
+from wiktionary import Wiktionary
 
-API_ENDPOINT = "https://fr.wiktionary.org/w/api.php"
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 
@@ -46,25 +46,17 @@ BOTTOM_REGEX = re.compile(
 SANITIZE_REGEX = re.compile(r"== +\n")
 
 
-class FrWiktionary:
-    """
-    Constructor
-    """
+class FrWiktionary(Wiktionary):
 
     def __init__(self, user, password):
-        self.user = user
-        self.password = password
-        self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
-        self.dry_run = False
+        """
+        Constructor
+        """
+        super().__init__(user, password, "fr.wiktionary.org")
 
     """
     Public methods
     """
-
-    def set_dry_run(self):
-        self.dry_run = True
-        self.api.set_dry_run(True)
-
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
     # - Get the labels of the speaker's location in French
@@ -299,26 +291,3 @@ class FrWiktionary:
             index = len(content)
 
         return content[:index] + text + content[index:]
-
-        # edit the page
-
-    def do_edit(self, pagename, wikicode, basetimestamp):
-        result = self.api.request(
-            {
-                "action": "edit",
-                "format": "json",
-                "formatversion": "2",
-                "title": pagename,
-                "summary": SUMMARY,
-                "basetimestamp": basetimestamp,
-                "text": str(wikicode),
-                "token": self.api.get_csrf_token(),
-                "nocreate": 1,
-                "bot": 1,
-            }
-        )
-
-        if "edit" in result:
-            return True
-
-        return False

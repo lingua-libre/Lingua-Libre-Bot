@@ -44,3 +44,9 @@ optional arguments:
                         identified by its wikimedia language code
   --dryrun              run without applying any changes to the wiki
 </pre>
+
+## Contributing
+
+### Documentation
+
+Classes and methods are documented with Numpy-style docstrings.
