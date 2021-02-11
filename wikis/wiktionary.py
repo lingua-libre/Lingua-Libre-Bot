@@ -25,6 +25,13 @@ class Wiktionary(ABC):
 
     # Abstract methods
 
+    @abstractmethod
+    def get_edit_summary(self, record):
+        """
+        Returns the edit summary for this record.
+        """
+        return None
+
     # Public methods
 
     def set_dry_run(self) -> None:
@@ -33,6 +40,21 @@ class Wiktionary(ABC):
         """
         self.dry_run = True
         self.api.set_dry_run(True)
+
+    def get_location_translation(self, record):
+        """
+        Fetches the labels of the record's speaker's location, in the wiktionary's language.
+        """
+        # TODO: Get the LOCATION_QUERY
+
+    def prepare_records(self, records):
+        """
+        Fetches additional information about the records
+        """
+
+        for record in records:
+            # TODO: Add the whole handling there
+            self.get_location_translation(record)
 
     def execute(self, record):
         pass
@@ -73,7 +95,7 @@ class Wiktionary(ABC):
                 "format": "json",
                 "formatversion": "2",
                 "title": pagename,
-                "summary": SUMMARY,
+                "summary": self.get_edit_summary(),
                 "basetimestamp": basetimestamp,
                 "text": str(wikicode),
                 "token": self.api.get_csrf_token(),
