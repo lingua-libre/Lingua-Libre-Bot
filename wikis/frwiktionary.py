@@ -5,7 +5,6 @@
 # License: GNU GPL v2+
 
 import re
-import pywiki
 import wikitextparser as wtp
 
 from sparql import Sparql
@@ -97,10 +96,10 @@ class FrWiktionary(Wiktionary):
 
     def execute(self, record):
         # Normalize the record using frwiktionary's titles conventions
-        transcription = self.normalize(record["transcription"])
+        transcription = self.normalized_transcription(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(
+        (is_already_present, wikicode, basetimestamp) = self.fetch_entry(
             transcription, record["file"]
         )
 
@@ -161,8 +160,7 @@ class FrWiktionary(Wiktionary):
     Private methods
     """
 
-    # Normalize the transcription to fit frwiktionary's title conventions
-    def normalize(self, transcription):
+    def normalize_transcription(self, transcription):
         return transcription.replace("'", "’")
 
     # Invert the case of the first letter of the given string
@@ -173,39 +171,6 @@ class FrWiktionary(Wiktionary):
             text = text[0].upper() + text[1:]
 
         return text
-
-    # Fetch the contents of the given Wiktionary entry,
-    # and check by the way whether the file is already in it.
-    def get_entry(self, pagename, filename):
-        response = self.api.request(
-            {
-                "action": "query",
-                "format": "json",
-                "formatversion": "2",
-                "prop": "images|revisions",
-                "rvprop": "content|timestamp",
-                "titles": pagename,
-                "imimages": "File:" + filename,
-            }
-        )
-        page = response["query"]["pages"][0]
-
-        # If no pages have been found on this wiki for the given title
-        if "missing" in page:
-            return False, False, 0
-
-        # If there is the 'images' key, this means that the API has found
-        # the file at least once in the page, see [[:mw:API:Images]]
-        is_already_present = "images" in page
-
-        # Extract the needed infos from the response and return them
-        wikicode = page["revisions"][0]["content"]
-        basetimestamp = page["revisions"][0]["timestamp"]
-
-        # Sanitize the wikicode to avoid edge cases later on
-        wikicode = SANITIZE_REGEX.sub('==\n', wikicode)
-
-        return is_already_present, wtp.parse(wikicode), basetimestamp
 
     # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):

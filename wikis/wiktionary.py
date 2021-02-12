@@ -5,7 +5,10 @@
 # License: GNU GPL v2+
 
 from abc import ABC, abstractmethod
+from typing import Tuple, Any
+
 import pywiki
+import wikitextparser as wtp
 
 
 class Wiktionary(ABC):
@@ -32,6 +35,18 @@ class Wiktionary(ABC):
         """
         return None
 
+    @abstractmethod
+    def normalize_transcription(self, transcription: str) -> str:  # TODO: improve docs: what "is" the transcription?
+        """
+        Returns a normalized transcription to fit the Wiktionary's title conventions.
+
+        Returns
+        -------
+        str
+            The normalized transcription.
+        """
+        return transcription
+
     # Public methods
 
     def set_dry_run(self) -> None:
@@ -57,9 +72,10 @@ class Wiktionary(ABC):
             self.get_location_translation(record)
 
     def execute(self, record):
+
         pass
 
-    def fetch_entry(self, pagename, filename):
+    def fetch_entry(self, pagename: str, filename: str) -> Tuple[bool, wtp.WikiText, Any]:
         """
         Fetches the page content from Wiktionary and checks whether the file is already part of it.
 
@@ -73,14 +89,43 @@ class Wiktionary(ABC):
         Returns
         -------
         bool
-            `True` if the recording is already part of the page, `False` otherwise.
+            True if the recording is already part of the page, False otherwise.
         str
             Content of the page (as unparsed wikicode).
         str
             Timestamp of the page's current revision (used by the API to detect eventual edit conflicts).
         """
+        response = self.api.request(
+            {
+                "action": "query",
+                "format": "json",
+                "formatversion": "2",
+                "prop": "images|revisions",
+                "rvprop": "content|timestamp",
+                "titles": pagename,
+                "imimages": "File:" + filename,
+            }
+        )
+        page = response["query"]["pages"][0]
 
-    def do_edit(self, pagename, wikicode, basetimestamp):
+        # If no pages have been found on this wiki for the given title
+        if "missing" in page:
+            return False, wtp.WikiText(""), 0
+
+        # If there is the 'images' key, this means that the API has found
+        # the file at least once in the page, see [[:mw:API:Images]]
+        is_already_present = "images" in page
+
+        # Extract the needed infos from the response and return them
+        wikicode = page["revisions"][0]["content"]
+        basetimestamp = page["revisions"][0]["timestamp"]
+
+        # Sanitize the wikicode to avoid edge cases later on
+        # wikicode = SANITIZE_REGEX.sub('==\n', wikicode) TODO: Check if still needed
+
+        return is_already_present, wtp.parse(wikicode), basetimestamp
+
+    def do_edit(self, pagename: str, wikicode: str, basetimestamp: str) -> bool:
         """
         Applies the edit to the page.
 
@@ -104,7 +149,4 @@ class Wiktionary(ABC):
             }
         )
 
-        if "edit" in result:
-            return True
-
-        return False
+        return "edit" in result
