@@ -1,7 +1,17 @@
-# Lingua-Libre-Bot
-This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), whose goal is to ease the resuse of all the records made on [Lingua Libre](https://lingualibre.org) on as much wikis as possible.
+# Lingua Libre Bot
+This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), whose goal is to ease the reuse of all the records made on [Lingua Libre](https://lingualibre.org) on as much wikis as possible.
 
-## Dependencies
+## Wikimedia projects
+
+Lingua Libre Bot is able to contribute on the following Wikimedia projects:
+* Wikidata
+* Wikidata Lexemes
+* French Wiktionary
+* Occitan Wiktionary
+
+## Operational documentation
+
+### Dependencies
 Lingua Libre Bot requires Python 3.8 to work, and the following packages in their latest version:
 * wikitextparser
 * requests
@@ -9,8 +19,7 @@ Lingua Libre Bot requires Python 3.8 to work, and the following packages in thei
 * uuid
 * backoff
 
-
-## Installation
+### Installation
 Install the aforementioned packages:
 <pre>pip install -r requirements.txt</pre>
 
@@ -21,7 +30,7 @@ Copy the configuration file and edit it with your information:
 </pre>
 
 
-## Usage
+### Usage
 <pre>usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
                 [--user USER]
                 [--lang LANG | --langiso LANGISO | --langwm LANGWM]
