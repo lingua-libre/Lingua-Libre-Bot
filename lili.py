@@ -4,8 +4,6 @@ import requests
 import json
 from sparql import Sparql
 
-
-
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
 BASEQUERY = """
@@ -75,7 +73,9 @@ def get_records(query):
                 },
             }
         ]
-    print("WARNING: No results found.")
+    if len(records) == 0:
+        print("WARNING: No results found.")
+        exit(1)
     return records
 
 

@@ -125,9 +125,20 @@ class Wiktionary(ABC):
 
         return is_already_present, wtp.parse(wikicode), basetimestamp
 
-    def do_edit(self, pagename: str, wikicode: str, basetimestamp: str) -> bool:
+    def do_edit(self, pagename: str, wikicode: str, basetimestamp: str, record) -> bool:
         """
         Applies the edit to the page.
+
+        Parameters
+        ----------
+        pagename: str
+            Name of the page to edit
+        wikicode: str
+            Wikicode to apply to the page
+        basetimestamp: str
+            Timestamp of the page's current revision (used by the API to detect eventual edit conflicts).
+        record
+            # TODO
 
         Returns
         -------
@@ -140,7 +151,7 @@ class Wiktionary(ABC):
                 "format": "json",
                 "formatversion": "2",
                 "title": pagename,
-                "summary": self.get_edit_summary(),
+                "summary": self.get_edit_summary(record),
                 "basetimestamp": basetimestamp,
                 "text": str(wikicode),
                 "token": self.api.get_csrf_token(),

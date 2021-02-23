@@ -8,7 +8,7 @@ import re
 import wikitextparser as wtp
 
 from sparql import Sparql
-from wiktionary import Wiktionary
+from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
