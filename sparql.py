@@ -23,11 +23,12 @@ class Sparql:
     def __init__(self, endpoint):
         self.endpoint = endpoint
 
+    # TODO better handle the exceptions coming from this
     @backoff.on_exception(backoff.expo, exception=(requests.exceptions.Timeout,
                                                    requests.exceptions.ConnectionError,
                                                    requests.exceptions.ChunkedEncodingError,
                                                    json.decoder.JSONDecodeError),
-                          max_tries=8)
+                          max_tries=5)
     def request(self, query):
         response = requests.post(self.endpoint, data={"format": "json", "query": query})
         return json.loads(response.text)["results"]["bindings"]
