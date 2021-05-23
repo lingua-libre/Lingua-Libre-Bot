@@ -5,7 +5,6 @@ import json
 from sparql import Sparql
 
 
-
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
 BASEQUERY = """
@@ -98,23 +97,26 @@ def live_mode(args, supported_wikis):
                 "rcstart": prev_timestamp,
                 "rcdir": "newer",
                 "rcnamespace": "0",
-                "rcprop": "title|timestamp|ids",
+                "rcprop": "title|ids",
                 "rclimit": "500",
                 "rctype": "new|edit",
             },
         )
         data = json.loads(r.text)["query"]["recentchanges"]
 
+        prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        print("Current time:", prev_timestamp)
+
         for rc in data:
             items.add(rc["title"])
-            prev_timestamp = rc["timestamp"]
+            print("found:", rc["title"])
 
-        if len(items - prev_items) > 0:
-            args.item = ",".join(items - prev_items)
+        if len(items.difference(prev_items)) > 0:
+            args.item = ",".join(items.difference(prev_items))
             prev_items = set(simple_mode(args, supported_wikis))
             print(len(prev_items))
 
-        items = items - prev_items
+        items = items.difference(prev_items)
 
         if len(items) > 0:
             print("Remaining items: " + ",".join(items))
