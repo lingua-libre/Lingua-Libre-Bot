@@ -118,7 +118,7 @@ class FrWiktionary:
 
         # Whether the record is already inside the entry
         if is_already_present is True:
-            print(record["id"] + ": already on frwiktionary")
+            print((record["id"] + "//" + transcription + ": already on frwiktionary").encode("utf-8"))
             return False
 
         # Try to extract the section of the language of the record
@@ -128,7 +128,7 @@ class FrWiktionary:
 
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + ": language section not found")
+            print((record["id"] + "//" + transcription + ": language section not found").encode("utf-8"))
             return False
 
         # Try to extract the pronunciation subsection
@@ -158,9 +158,9 @@ class FrWiktionary:
 
         if result is True:
             print(
-                record["id"]
+                (record["id"] + "//" + transcription
                 + ": added to frwiktionary - https://fr.wiktionary.org/wiki/"
-                + transcription
+                + transcription).encode("utf-8")
             )
 
         return result

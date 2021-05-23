@@ -109,11 +109,11 @@ class Wikidata:
         )
         if result is True:
             print(
-                record["id"]
+                (record["id"]
                 + ": added to Wikidata - https://www.wikidata.org/wiki/"
                 + record["links"]["wikidata"]
                 + "#"
-                + PRONUNCIATION_PROPERTY
+                + PRONUNCIATION_PROPERTY).encode("utf-8")
             )
 
         return result
@@ -176,12 +176,12 @@ class Wikidata:
                         connections[lang + ":" + title] = qid
                     else:
                         print(
-                            "Title and label diverge: "
+                            ("Title and label diverge: "
                             + qid
                             + " - "
                             + BRACKET_REGEX.sub("", title).lower()
                             + " - "
-                            + label.lower()
+                            + label.lower()).encode("utf-8")
                         )
 
         return connections
