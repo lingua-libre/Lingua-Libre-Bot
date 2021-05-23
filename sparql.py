@@ -10,8 +10,8 @@ import urllib.parse
 import backoff
 
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
-WIKIDATA_ENTITY = u"http://www.wikidata.org/entity/"
-COMMONS_FILEPATH = u"http://commons.wikimedia.org/wiki/Special:FilePath/"
+WIKIDATA_ENTITY = u"https://www.wikidata.org/entity/"
+COMMONS_FILEPATH = u"https://commons.wikimedia.org/wiki/Special:FilePath/"
 
 
 class Sparql:
