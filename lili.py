@@ -44,7 +44,9 @@ WHERE {
 
 def get_records(query):
     sparql = Sparql(ENDPOINT)
+    print("Requesting data")
     raw_records = sparql.request(query)
+    print("Request done")
     records = []
     for record in raw_records:
         records += [
@@ -74,7 +76,7 @@ def get_records(query):
                 },
             }
         ]
-    print("WARNING: No results found.")
+    print(f"Found {len(records)} records.")
     return records
 
 
