@@ -225,6 +225,9 @@ class FrWiktionary:
 
         # Travel across each sections titles to find the one we want
         for section in wikicode.sections:
+            if section.title is None:
+                continue
+
             if section.title.replace(" ", "").lower() == "{{langue|" + lang + "}}":
                 return section
 
@@ -236,6 +239,9 @@ class FrWiktionary:
 
     def get_pronunciation_section(self, wikicode):
         for section in wikicode.sections:
+            if section.title is None:
+                continue
+
             if section.title.replace(" ", "").lower() == "{{s|prononciation}}":
                 return section
 
@@ -250,6 +256,8 @@ class FrWiktionary:
         # the pronunciation section
         prev_section = wikicode.sections[0]
         for section in wikicode.sections:
+            if section.title is None:
+                continue
             if section.title.replace(" ", "").lower() in FOLLOWING_SECTIONS:
                 break
             prev_section = section
