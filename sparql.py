@@ -9,6 +9,10 @@ import json
 import urllib.parse
 import backoff
 
+LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
+WIKIDATA_ENTITY = u"http://www.wikidata.org/entity/"
+COMMONS_FILEPATH = u"http://commons.wikimedia.org/wiki/Special:FilePath/"
+
 
 class Sparql:
 
@@ -32,13 +36,11 @@ class Sparql:
         if key in sparql_result:
             value = sparql_result[key]["value"]
             if sparql_result[key]["type"] == "uri":
-                if value.startswith(u"https://lingualibre.org/entity/"):
-                    value = value[30:]
-                if value.startswith(u"http://www.wikidata.org/entity/"):
-                    value = value[31:]
-                if value.startswith(
-                    u"http://commons.wikimedia.org/wiki/Special:FilePath/"
-                ):
-                    value = urllib.parse.unquote(value[51:])
+                if value.startswith(LINGUALIBRE_ENTITY):
+                    value = value[len(LINGUALIBRE_ENTITY):]
+                if value.startswith(WIKIDATA_ENTITY):
+                    value = value[len(WIKIDATA_ENTITY):]
+                if value.startswith(COMMONS_FILEPATH):
+                    value = urllib.parse.unquote(value[len(COMMONS_FILEPATH):])
             return value
         return None
