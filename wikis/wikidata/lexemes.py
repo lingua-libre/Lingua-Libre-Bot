@@ -5,8 +5,9 @@
 # License: GNU GPL v2+
 
 import re
-import pywiki
 import uuid
+
+from wikis.wikifamily import WikiFamily
 
 API_ENDPOINT = "https://www.wikidata.org/w/api.php"
 PRONUNCIATION_PROPERTY = "P443"
@@ -15,25 +16,24 @@ SUMMARY = "Add an audio pronunciation file from Lingua Libre"
 BRACKET_REGEX = re.compile(r" \([^(]+\)$")
 
 
-class Lexemes:
-
-    """
-    Constructor
-    """
+class Lexemes(WikiFamily):
 
     def __init__(self, user, password):
-        self.user = user
-        self.password = password
-        self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
-        self.dry_run = False
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        user
+            Username to login to the wiki.
+        password
+            Password to log into the account.
+        """
+        super().__init__(user, password, "wikidata", "www")
 
     """
     Public methods
     """
-
-    def set_dry_run(self):
-        self.dry_run = True
-        self.api.set_dry_run(True)
 
     # Prepare all the records for their use on Wikidata
     # Currently not needed
