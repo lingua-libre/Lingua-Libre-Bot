@@ -19,7 +19,7 @@ EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
 PRONUNCIATION_LINE = "\n* {{écouter|lang=$2|$3||audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparaisons;
-# those listed bellow must thereby be in lower case and without any space
+# those listed below must thereby be in lower case and without any space
 FOLLOWING_SECTIONS = [
     "{{s|anagrammes}}",
     "{{s|anagr}}",
