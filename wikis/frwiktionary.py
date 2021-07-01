@@ -289,6 +289,9 @@ class FrWiktionary:
             pronunciation_line,
         )
 
+        # Remove the {{ébauche-pron-audio|fr}} if there was one
+        section_content = re.sub("\*?\s*{{ébauche-pron-audio|fr}}\s*\n", "", section_content)
+
         wikicode.sections[1].contents = str(section_content)
 
         # Remove the ugly hack, see comment line 17
