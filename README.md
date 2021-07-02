@@ -12,7 +12,7 @@ Lingua Libre Bot is able to contribute on the following Wikimedia projects:
 ## Operational documentation
 
 ### Dependencies
-Lingua Libre Bot requires Python 3.8 to work, and the following packages in their latest version:
+Lingua Libre Bot requires Python 3.6 to work, and the following packages in their latest version:
 * wikitextparser
 * requests
 * argparse
