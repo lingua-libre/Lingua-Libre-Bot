@@ -53,3 +53,15 @@ optional arguments:
                         identified by its wikimedia language code
   --dryrun              run without applying any changes to the wiki
 </pre>
+
+#### Preferred date format
+
+```
+%Y-%m-%dT01:00:00.000+00:00
+```
+
+If you need to automate the bot running a few times a week, you can use the following Linux command :
+```
+> date -d "-2 days" +'%Y-%m-%dT01:00:00.000+00:00'
+2021-06-30T01:00:00.000+00:00
+```
