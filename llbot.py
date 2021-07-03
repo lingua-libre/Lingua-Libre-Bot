@@ -103,7 +103,10 @@ def main():
             supported_wikis[dbname].set_dry_run()
 
     # Start the bot in the selected mode (simple or live)
-    items = args.func(args, supported_wikis)
+    try:
+        items = args.func(args, supported_wikis)
+    except AttributeError:
+        parser.error("\"simple\" or \"live\" is mandatory")
     print(len(items))
 
 
