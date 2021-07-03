@@ -27,7 +27,9 @@ def main():
         "wikidatawiki": Wikidata(
             config.get("wiki", "user"), config.get("wiki", "password")
         ),
-        "lexemes": Lexemes(config.get("wiki", "user"), config.get("wiki", "password")),
+        "lexemes": Lexemes(
+            config.get("wiki", "user"), config.get("wiki", "password")
+        ),
         "frwiktionary": FrWiktionary(
             config.get("wiki", "user"), config.get("wiki", "password")
         ),
