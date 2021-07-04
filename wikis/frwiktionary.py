@@ -234,8 +234,7 @@ class FrWiktionary:
                 # the record's language
         return None
 
-        # Try to extract the pronunciation subsection
-
+    # Try to extract the pronunciation subsection
     def get_pronunciation_section(self, wikicode):
         for section in wikicode.sections:
             if section.title is None:
@@ -246,8 +245,7 @@ class FrWiktionary:
 
         return None
 
-        # Create a pronunciation subsection
-
+    # Create a pronunciation subsection
     def create_pronunciation_section(self, wikicode):
         # The sections order is fixed, etymology, word type (and it's many
         # subsections, pronunciation, anagram, see also and references)
@@ -269,8 +267,7 @@ class FrWiktionary:
 
         return self.get_pronunciation_section(wikicode)
 
-        # Add the audio template to the pronunciation section
-
+    # Add the audio template to the pronunciation section
     def append_file(self, wikicode, filename, language_qid, location_qid):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
