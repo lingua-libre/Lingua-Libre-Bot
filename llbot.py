@@ -24,19 +24,13 @@ if len(res) == 0:
 # Main
 def main():
     # Create an object for each supported wiki
+    user = config.get("wiki", "user")
+    password = config.get("wiki", "password")
     supported_wikis = {
-        "wikidatawiki": Wikidata(
-            config.get("wiki", "user"), config.get("wiki", "password")
-        ),
-        "lexemes": Lexemes(
-            config.get("wiki", "user"), config.get("wiki", "password")
-        ),
-        "frwiktionary": FrWiktionary(
-            config.get("wiki", "user"), config.get("wiki", "password")
-        ),
-        "ocwiktionary": OcWiktionary(
-            config.get("wiki", "user"), config.get("wiki", "password")
-        ),
+        "wikidatawiki": Wikidata(user, password),
+        "lexemes": Lexemes(user, password),
+        "frwiktionary": FrWiktionary(user, password),
+        "ocwiktionary": OcWiktionary(user, password),
     }
 
     # Declare the command-line arguments
