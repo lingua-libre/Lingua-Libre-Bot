@@ -101,8 +101,7 @@ class FrWiktionary:
 
         return records
 
-        # Try to use the given record on the French Wiktionary
-
+    # Try to use the given record on the French Wiktionary
     def execute(self, record):
         # Normalize the record using frwiktionary's titles conventions
         transcription = self.normalize(record["transcription"])
@@ -290,7 +289,7 @@ class FrWiktionary:
         )
 
         # Remove the {{ébauche-pron-audio|fr}} if there was one
-        section_content = re.sub("\*?\s*{{ébauche-pron-audio|fr}}\s*\n", "", str(section_content))
+        section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
 
         wikicode.sections[1].contents = str(section_content)
 
@@ -311,8 +310,7 @@ class FrWiktionary:
 
         return content[:index] + text + content[index:]
 
-        # edit the page
-
+    # Edit the page
     def do_edit(self, pagename, wikicode, basetimestamp):
         result = self.api.request(
             {
