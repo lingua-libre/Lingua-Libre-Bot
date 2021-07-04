@@ -101,8 +101,7 @@ class FrWiktionary:
 
         return records
 
-        # Try to use the given record on the French Wiktionary
-
+    # Try to use the given record on the French Wiktionary
     def execute(self, record):
         # Normalize the record using frwiktionary's titles conventions
         transcription = self.normalize(record["transcription"])
