@@ -311,8 +311,7 @@ class FrWiktionary:
 
         return content[:index] + text + content[index:]
 
-        # edit the page
-
+    # Edit the page
     def do_edit(self, pagename, wikicode, basetimestamp):
         result = self.api.request(
             {
