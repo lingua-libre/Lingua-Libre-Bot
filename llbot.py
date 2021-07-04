@@ -16,8 +16,9 @@ from wikis.ocwiktionary import OcWiktionary
 from wikis.lexemes import Lexemes
 
 config = configparser.ConfigParser()
-config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
-
+res=config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
+if len(res) == 0:
+    raise OSError("config.ini does not exist")
 
 # Main
 def main():
