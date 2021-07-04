@@ -19,7 +19,7 @@ EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
 PRONUNCIATION_LINE = "\n* {{écouter|lang=$2|$3||audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparaisons;
-# those listed bellow must thereby be in lower case and without any space
+# those listed below must thereby be in lower case and without any space
 FOLLOWING_SECTIONS = [
     "{{s|anagrammes}}",
     "{{s|anagr}}",
@@ -288,6 +288,9 @@ class FrWiktionary:
             section_content.sections[0].contents,
             pronunciation_line,
         )
+
+        # Remove the {{ébauche-pron-audio|fr}} if there was one
+        section_content = re.sub("\*?\s*{{ébauche-pron-audio|fr}}\s*\n", "", section_content)
 
         wikicode.sections[1].contents = str(section_content)
 
