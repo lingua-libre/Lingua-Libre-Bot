@@ -94,6 +94,10 @@ def main():
     # Parse the command-line arguments
     args = parser.parse_args()
 
+    # Make sure a mode has been selected
+    if 'func' not in args:
+        parser.error("Please provide a mode (either \"simple\" or \"live\")")
+
     # Filter the wikis depending on the fetched arguments
     if args.wiki is not None:
         tmp = supported_wikis[args.wiki]
