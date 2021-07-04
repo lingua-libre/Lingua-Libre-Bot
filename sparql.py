@@ -32,6 +32,38 @@ class Sparql:
                           max_tries=5)
     def request(self, query):
         response = requests.post(self.endpoint, data={"format": "json", "query": query})
+        
+        ''' 504 error
+        <html>
+        <head><title>504 Gateway Time-out</title></head>
+        <body>
+        <center><h1>504 Gateway Time-out</h1></center>
+        <hr><center>nginx</center>
+        </body>
+        </html>
+        '''
+        if response.text.find("504 Gateway Time-out") != -1:
+            print("504 Gateway Time-out\n" \
+                  "Try to use --startdate")
+            return ""
+
+        ''' 429 error
+        <html>
+        <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <title>Error 429 Too Many Requests - Please retry in 3 seconds.</title>
+        </head>
+        <body><h2>HTTP ERROR 429</h2>
+        <p>Problem accessing /bigdata/namespace/wdq/sparql. Reason:
+        <pre>    Too Many Requests - Please retry in 3 seconds.</pre></p><hr><a href="http://eclipse.org/jetty">Powered by Jetty:// 9.4.12.v20180830</a><hr/>
+        
+        </body>
+        </html>
+        '''
+        if response.text.find("Error 429 Too Many Requests") != -1:
+            print("Error 429 Too Many Requests")
+            return ""
+        
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
