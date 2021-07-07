@@ -168,8 +168,6 @@ def simple_mode(args, supported_wikis):
         if counter % 10 == 0:
             print(f"[{counter}/{total}]")
     # TODO: better handling of the KeyboardInterrupt
-    # TODO: add to the README about the rfc format of the dates https://stackoverflow.com/questions/11318634/how-to-convert-date-in-rfc-3339-to-the-javascript-date-objectmilliseconds-since
-    # --startdate "2021-01-26T00:00:00.000+00:00" --enddate "2021-01-28T00:00:00.000+00:00"
     # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin, nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
 
     return [record["id"] for record in records]
