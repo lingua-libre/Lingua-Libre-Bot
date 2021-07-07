@@ -8,7 +8,7 @@ import re
 import wikitextparser as wtp
 
 from sparql import Sparql
-from wikis.wikifamily import WikiFamily
+from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
@@ -42,10 +42,9 @@ BOTTOM_REGEX = re.compile(
     r"(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
-SANITIZE_REGEX = re.compile(r"== +\n")
 
 
-class FrWiktionary(WikiFamily):
+class FrWiktionary(Wiktionary):
 
     def __init__(self, user, password):
         """
@@ -58,7 +57,7 @@ class FrWiktionary(WikiFamily):
         password
             Password to log into the account.
         """
-        super().__init__(user, password, "wiktionary", "fr")
+        super().__init__(user, password, "fr", SUMMARY)
 
     """
     Public methods
@@ -180,39 +179,6 @@ class FrWiktionary(WikiFamily):
 
         return text
 
-    # Fetch the contents of the given Wiktionary entry,
-    # and check by the way whether the file is already in it.
-    def get_entry(self, pagename, filename):
-        response = self.api.request(
-            {
-                "action": "query",
-                "format": "json",
-                "formatversion": "2",
-                "prop": "images|revisions",
-                "rvprop": "content|timestamp",
-                "titles": pagename,
-                "imimages": "File:" + filename,
-            }
-        )
-        page = response["query"]["pages"][0]
-
-        # If no pages have been found on this wiki for the given title
-        if "missing" in page:
-            return False, False, 0
-
-        # If there is the 'images' key, this means that the API has found
-        # the file at least once in the page, see [[:mw:API:Images]]
-        is_already_present = "images" in page
-
-        # Extract the needed infos from the response and return them
-        wikicode = page["revisions"][0]["content"]
-        basetimestamp = page["revisions"][0]["timestamp"]
-
-        # Sanitize the wikicode to avoid edge cases later on
-        wikicode = SANITIZE_REGEX.sub('==\n', wikicode)
-
-        return is_already_present, wtp.parse(wikicode), basetimestamp
-
     # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
@@ -305,25 +271,3 @@ class FrWiktionary(WikiFamily):
             index = len(content)
 
         return content[:index] + text + content[index:]
-
-    # Edit the page
-    def do_edit(self, pagename, wikicode, basetimestamp):
-        result = self.api.request(
-            {
-                "action": "edit",
-                "format": "json",
-                "formatversion": "2",
-                "title": pagename,
-                "summary": SUMMARY,
-                "basetimestamp": basetimestamp,
-                "text": str(wikicode),
-                "token": self.api.get_csrf_token(),
-                "nocreate": 1,
-                "bot": 1,
-            }
-        )
-
-        if "edit" in result:
-            return True
-
-        return False

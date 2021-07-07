@@ -8,7 +8,7 @@ import re
 import wikitextparser as wtp
 
 from sparql import Sparql
-from wikis.wikifamily import WikiFamily
+from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
@@ -50,7 +50,7 @@ BOTTOM_REGEX = re.compile(
 )
 
 
-class OcWiktionary(WikiFamily):
+class OcWiktionary(Wiktionary):
 
     def __init__(self, user, password):
         """
@@ -63,7 +63,7 @@ class OcWiktionary(WikiFamily):
         password
             Password to log into the account.
         """
-        super().__init__(user, password, "wiktionary", "oc")
+        super().__init__(user, password, "oc", SUMMARY)
 
     """
     Public methods
@@ -249,8 +249,7 @@ class OcWiktionary(WikiFamily):
     def normalize(self, transcription):
         return transcription.replace("'", "’")
 
-        # Invert the case of the first letter of the given string
-
+    # Invert the case of the first letter of the given string
     def invert_case(self, text):
         if text[0].isupper():
             text = text[0].lower() + text[1:]
@@ -258,57 +257,3 @@ class OcWiktionary(WikiFamily):
             text = text[0].upper() + text[1:]
 
         return text
-
-        # Fetch the contents of the given Wiktionary entry,
-        # and check by the way whether the file is already in it.
-
-    def get_entry(self, pagename, filename):
-        response = self.api.request(
-            {
-                "action": "query",
-                "format": "json",
-                "formatversion": "2",
-                "prop": "images|revisions",
-                "rvprop": "content|timestamp",
-                "titles": pagename,
-                "imimages": "File:" + filename,
-            }
-        )
-        page = response["query"]["pages"][0]
-
-        # If no pages have been found on this wiki for the given title
-        if "missing" in page:
-            return (False, False, 0)
-
-            # If there is the 'images' key, this means that the API has found
-            # the file at least once in the page, see [[:mw:API:Images]]
-        is_already_present = "images" in page
-
-        # Extract the needed infos from the response and return them
-        wikicode = page["revisions"][0]["content"]
-        basetimestamp = page["revisions"][0]["timestamp"]
-
-        return (is_already_present, wikicode, basetimestamp)
-
-        # edit the page
-
-    def do_edit(self, pagename, wikicode, basetimestamp):
-        result = self.api.request(
-            {
-                "action": "edit",
-                "format": "json",
-                "formatversion": "2",
-                "title": pagename,
-                "summary": SUMMARY,
-                "basetimestamp": basetimestamp,
-                "text": str(wikicode),
-                "token": self.api.get_csrf_token(),
-                "nocreate": 1,
-                "bot": 1,
-            }
-        )
-
-        if "edit" in result:
-            return True
-
-        return False
