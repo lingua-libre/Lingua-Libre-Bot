@@ -286,7 +286,7 @@ class FrWiktionary:
         )
 
         # Remove the {{ébauche-pron-audio|fr}} if there was one
-        section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", section_content)
+        section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
 
         wikicode.sections[1].contents = str(section_content)
 
