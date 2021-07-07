@@ -87,7 +87,4 @@ class Wiktionary(WikiFamily, abc.ABC):
             }
         )
 
-        if "edit" in result:
-            return True
-
-        return False
+        return "edit" in result
