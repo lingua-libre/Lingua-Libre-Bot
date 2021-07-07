@@ -170,15 +170,6 @@ class FrWiktionary(Wiktionary):
     def normalize(self, transcription):
         return transcription.replace("'", "’")
 
-    # Invert the case of the first letter of the given string
-    def invert_case(self, text):
-        if text[0].isupper():
-            text = text[0].lower() + text[1:]
-        else:
-            text = text[0].upper() + text[1:]
-
-        return text
-
     # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not

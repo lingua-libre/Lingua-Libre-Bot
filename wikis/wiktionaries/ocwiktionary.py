@@ -248,12 +248,3 @@ class OcWiktionary(Wiktionary):
     # Normalize the transcription to fit ocwiktionary's title conventions
     def normalize(self, transcription):
         return transcription.replace("'", "’")
-
-    # Invert the case of the first letter of the given string
-    def invert_case(self, text):
-        if text[0].isupper():
-            text = text[0].lower() + text[1:]
-        else:
-            text = text[0].upper() + text[1:]
-
-        return text
