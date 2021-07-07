@@ -121,11 +121,11 @@ class OcWiktionary(Wiktionary):
         )
 
         # Whether there is no entry for this record on ocwiktionary
-        if wikicode == False:
+        if not wikicode:
             return False
 
             # Whether the record is already inside the entry
-        if is_already_present == True:
+        if is_already_present:
             print(record["id"] + ": already on ocwiktionary")
             return False
 
@@ -232,7 +232,7 @@ class OcWiktionary(Wiktionary):
             else:
                 raise e
 
-        if result == True:
+        if result:
             print(
                 record["id"]
                 + ": added to ocwiktionary - https://oc.wiktionary.org/wiki/"

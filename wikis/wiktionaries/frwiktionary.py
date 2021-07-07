@@ -110,11 +110,11 @@ class FrWiktionary(Wiktionary):
         )
 
         # Whether there is no entry for this record on frwiktionary
-        if wikicode is False:
+        if not wikicode:
             return False
 
         # Whether the record is already inside the entry
-        if is_already_present is True:
+        if is_already_present:
             print(record["id"] + "//" + transcription + ": already on frwiktionary")
             return False
 
@@ -153,7 +153,7 @@ class FrWiktionary(Wiktionary):
             else:
                 raise e
 
-        if result is True:
+        if result:
             print(
                 record["id"] + "//" + transcription
                 + ": added to frwiktionary - https://fr.wiktionary.org/wiki/"
