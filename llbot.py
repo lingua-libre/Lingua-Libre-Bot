@@ -11,9 +11,9 @@ import os
 import lili
 
 from wikis.wikidata import Wikidata
-from wikis.frwiktionary import FrWiktionary
-from wikis.ocwiktionary import OcWiktionary
-from wikis.lexemes import Lexemes
+from wikis.wiktionaries.frwiktionary import FrWiktionary
+from wikis.wiktionaries.ocwiktionary import OcWiktionary
+from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
 res = config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
