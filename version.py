@@ -4,4 +4,4 @@
 # Date: 11 June 2019
 # License: GNU GPL v2+
 
-__version__ = '2.0.0'
+__version__ = '3.0.0'
