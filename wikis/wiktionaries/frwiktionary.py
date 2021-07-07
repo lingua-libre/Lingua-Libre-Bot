@@ -5,12 +5,11 @@
 # License: GNU GPL v2+
 
 import re
-import pywiki
 import wikitextparser as wtp
 
 from sparql import Sparql
+from wikis.wikifamily import WikiFamily
 
-API_ENDPOINT = "https://fr.wiktionary.org/w/api.php"
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 
@@ -46,24 +45,24 @@ BOTTOM_REGEX = re.compile(
 SANITIZE_REGEX = re.compile(r"== +\n")
 
 
-class FrWiktionary:
-    """
-    Constructor
-    """
+class FrWiktionary(WikiFamily):
 
     def __init__(self, user, password):
-        self.user = user
-        self.password = password
-        self.api = pywiki.Pywiki(user, password, API_ENDPOINT, "user")
-        self.dry_run = False
+        """
+        Constructor.
+
+        Parameters
+        ----------
+        user
+            Username to login to the wiki.
+        password
+            Password to log into the account.
+        """
+        super().__init__(user, password, "wiktionary", "fr")
 
     """
     Public methods
     """
-
-    def set_dry_run(self):
-        self.dry_run = True
-        self.api.set_dry_run(True)
 
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
