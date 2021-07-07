@@ -12,6 +12,7 @@ Lingua Libre Bot is able to contribute on the following Wikimedia projects:
 ## Operational documentation
 
 ### Dependencies
+
 Lingua Libre Bot requires Python 3.6 to work, and the following packages in their latest version:
 * wikitextparser
 * requests
@@ -20,18 +21,22 @@ Lingua Libre Bot requires Python 3.6 to work, and the following packages in thei
 * backoff
 
 ### Installation
+
 Install the aforementioned packages:
-<pre>pip install -r requirements.txt</pre>
+```
+pip install -r requirements.txt
+```
 
 Copy the configuration file and edit it with your information:
-<pre>
-  cp config.ini.sample config.ini
-  vi config.ini
-</pre>
-
+```
+cp config.ini.sample config.ini
+vi config.ini
+```
 
 ### Usage
-<pre>usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
+
+```
+usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
                 [--user USER]
                 [--lang LANG | --langiso LANGISO | --langwm LANGWM]
 
@@ -52,7 +57,7 @@ optional arguments:
   --langwm LANGWM       run only on records from the given language,
                         identified by its wikimedia language code
   --dryrun              run without applying any changes to the wiki
-</pre>
+```
 
 #### Preferred date format
 
