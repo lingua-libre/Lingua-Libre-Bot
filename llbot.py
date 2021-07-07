@@ -10,7 +10,7 @@ import os
 
 import lili
 
-from wikis.wikidata import Wikidata
+from wikis.wikidata.wikidata import Wikidata
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wikidata.lexemes import Lexemes
