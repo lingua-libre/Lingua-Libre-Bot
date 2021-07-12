@@ -64,9 +64,9 @@ class ShyWiktionary(Wiktionary):
     Public methods
     """
 
-    # Prepare the records to be added on the Tacawit Wiktionary:
+    # Prepare the records to be added on the Shawiya Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by shywiktionary)
-    # - Get the labels of the speaker's location in Tacawit
+    # - Get the labels of the speaker's location in Shawiya
     def prepare(self, records):
         sparql = Sparql(SPARQL_ENDPOINT)
 
@@ -98,10 +98,9 @@ class ShyWiktionary(Wiktionary):
                         " (" + location + ")"
                 )
 
-        print(f"records: {records}")
         return records
 
-    # Try to use the given record on the Tacawit Wiktionary
+    # Try to use the given record on the Shawiya Wiktionary
     def execute(self, record):
         # Normalize the record using shywiktionary's titles conventions
         transcription = self.normalize(record["transcription"])
@@ -146,6 +145,7 @@ class ShyWiktionary(Wiktionary):
         )
 
         # Save the result
+        #print(f"Mot: {transcription}\n{wikicode}")
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
