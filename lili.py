@@ -12,7 +12,7 @@ SELECT DISTINCT
     ?record ?file ?speaker ?speakerLabel ?date ?transcription
     ?qualifier ?wikidataId ?lexemeId ?wikipediaTitle ?wiktionaryEntry
     ?languageIso ?languageQid ?languageWMCode ?linkeduser
-    ?gender ?residence
+    ?gender ?residence ?language ?learningPlace ?languageLevel
 WHERE {
   ?record prop:P2 entity:Q2 .
   ?record prop:P3 ?file .
@@ -33,6 +33,13 @@ WHERE {
   ?speaker prop:P11 ?linkeduser .
   OPTIONAL { ?speaker prop:P8 ?gender . }
   OPTIONAL { ?speaker prop:P14 ?residence . }
+
+  ?speaker llp:P4 ?speakerLanguagesStatement .
+  ?speakerLanguagesStatement llv:P4 ?speakerLanguages .
+  OPTIONAL { ?speakerLanguagesStatement llq:P15 ?learningPlace . }
+  OPTIONAL { ?speakerLanguagesStatement llq:P16 ?languageLevel . }
+
+  FILTER( ?speakerLanguages = ?language) .
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en" .
@@ -73,6 +80,8 @@ def get_records(query):
                     "iso": sparql.format_value(record, "languageIso"),
                     "qid": sparql.format_value(record, "languageQid"),
                     "wm": sparql.format_value(record, "languageWMCode"),
+                    "learning": sparql.format_value(record, "learningPlace"),
+                    "level": sparql.format_value(record, "languageLevel"),
                 },
             }
         ]
