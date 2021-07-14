@@ -36,27 +36,34 @@ vi config.ini
 ### Usage
 
 ```
-usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
-                [--user USER]
-                [--lang LANG | --langiso LANGISO | --langwm LANGWM]
+usage: llbot.py {simple, live} [-h] [--dryrun] [--wiki WIKI]
 
 Reuse records made on Lingua Libre on some wikis.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --dryrun              run without applying any changes to the wiki
+  --wiki {wikidatawiki,frwiktionary}
+                        run only on the selected wiki
+  
+simple mode
   --item ITEM           run only on the given lingualibre item
   --startdate STARTDATE from which timestamp to start
   --enddate ENDDATE     at which timestamp to end
   --user USER           run only on records from the given user
-  --wiki {wikidatawiki,frwiktionary}
-                        run only on the selected wiki
   --lang LANG           run only on records from the given language,
                         identified by its lingua libre qid
   --langiso LANGISO     run only on records from the given language,
                         identified by its iso 693-3 code
   --langwm LANGWM       run only on records from the given language,
                         identified by its wikimedia language code
-  --dryrun              run without applying any changes to the wiki
+  
+live mode
+  --delay DELAY         duration in seconds to wait between
+                        2 recent changes check (default: 10 s)
+  --backcheck BACKCHECK check at launch recent changes in the 
+                        last BACKCHECK seconds (default: 0)
+                        
 ```
 
 #### Preferred date format
