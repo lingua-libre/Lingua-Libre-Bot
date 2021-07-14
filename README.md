@@ -36,9 +36,7 @@ vi config.ini
 ### Usage
 
 ```
-usage: llbot.py [-h] [--item ITEM] [--startdate STARTDATE] [--enddate ENDDATE]
-                [--user USER]
-                [--lang LANG | --langiso LANGISO | --langwm LANGWM]
+usage: llbot.py {simple, live} [-h] [--dryrun] [--wiki WIKI]
 
 Reuse records made on Lingua Libre on some wikis.
 
