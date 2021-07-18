@@ -28,14 +28,14 @@ LANGUAGE_QUERY = """
 SELECT ?item ?code ?itemLabel
 WHERE {
     ?item wdt:P305 ?code.
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, en" . }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, fr" . }
 }
 """
 LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
 WHERE {
   ?location wdt:P17 ?country.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, en" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, fr" . }
   VALUES ?location { wd:$1 }
 }
 """
