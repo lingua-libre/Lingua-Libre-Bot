@@ -64,6 +64,22 @@ class Sparql:
             print("Error 429 Too Many Requests")
             return ""
         
+        ''' MalformedQueryException
+        ...
+        java.util.concurrent.ExecutionException: org.openrdf.query.MalformedQueryException: Lexical error at line 26, column 64.  Encountered: " " (32), after : "tris"
+        at java.util.concurrent.FutureTask.report(FutureTask.java:122)
+        at java.util.concurrent.FutureTask.get(FutureTask.java:206)
+        ...
+        '''        
+        exceptionName = "MalformedQueryException"
+        if response.text.find(exceptionName + ":") != -1:
+            error = response.text
+            pos1 = response.text.find(exceptionName) + len(exceptionName) + 1
+            pos2 = response.text.find("\n",pos1)
+            error = error[pos1:pos2].strip()
+            print(f"MalformedQueryException: {error}")
+            return ""
+        
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
