@@ -13,6 +13,7 @@ import lili
 from wikis.wikidata.wikidata import Wikidata
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
+from wikis.wiktionaries.orwiktionary import OrWiktionary
 from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
@@ -31,6 +32,7 @@ def main():
         "lexemes": Lexemes(user, password),
         "frwiktionary": FrWiktionary(user, password),
         "ocwiktionary": OcWiktionary(user, password),
+        "orwiktionary": OrWiktionary(user, password),
     }
 
     # Declare the command-line arguments
