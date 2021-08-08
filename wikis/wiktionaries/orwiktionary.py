@@ -15,7 +15,7 @@ SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n=== ଉଚ୍ଚାରଣ ===\n$1"
-PRONUNCIATION_LINE = "\n* {{ଅଡ଼ିଓo|$1|ଧ୍ୱନି (ମାନକ ଓଡ଼ିଆ)|lang=$2}}"
+PRONUNCIATION_LINE = "\n* {{ଅଡ଼ିଓ|$1|ଧ୍ୱନି (ମାନକ ଓଡ଼ିଆ)|lang=$2}}"
 #{{ଅଡ଼ିଓ|Or-ଓଡ଼ିଆ 01.oga|ଧ୍ୱନି|lang=or}}
 
 # To be sure not to miss any title, they are normalized during comparaisons;
