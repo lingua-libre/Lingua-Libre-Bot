@@ -15,7 +15,7 @@ SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
-PRONUNCIATION_LINE = "\n* {{écouter|lang=$2|$3||audio=$1}}"
+PRONUNCIATION_LINE = "\n* {{écouter|$3||lang=$2|niveau=$4|audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparaisons;
 # those listed below must thereby be in lower case and without any space
@@ -78,7 +78,7 @@ class FrWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-            # Extract all different locations
+        # Extract all different locations
         locations = set()
         for record in records:
             if record["speaker"]["residence"] is not None:
@@ -135,12 +135,27 @@ class FrWiktionary(Wiktionary):
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
+        # Get the language level of the speaker and convert it to text
+        language_level_id = record["language"]["level"]
+        language_level = ""
+        if language_level_id:
+            if language_level_id == 'Q12':
+                language_level = "débutant"
+            if language_level_id == 'Q13':
+                language_level = "moyen"
+            if language_level_id == 'Q14':
+                language_level = "bon"
+            # do not display anything if "native"
+            if language_level_id == 'Q15':
+                language_level = ""
+ 
         # Add the pronunciation file to the pronunciation section
         self.append_file(
             pronunciation_section,
             record["file"],
             record["language"]["qid"],
             record["speaker"]["residence"],
+            language_level,
         )
 
         # Save the result
@@ -224,7 +239,7 @@ class FrWiktionary(Wiktionary):
         return self.get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid, location_qid):
+    def append_file(self, wikicode, filename, language_qid, location_qid, language_level):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
@@ -232,7 +247,8 @@ class FrWiktionary(Wiktionary):
             location = self.location_map[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
-            language_qid]).replace("$3", location)
+            language_qid]).replace("$3", location).replace("$4",language_level)
+
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
