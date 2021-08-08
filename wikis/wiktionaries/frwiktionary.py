@@ -15,7 +15,7 @@ SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
-PRONUNCIATION_LINE = "\n* {{écouter|$3||lang=$2|niveau=$4|audio=$1}}"
+PRONUNCIATION_LINE = "\n* {{écouter|$3|$4|lang=$2|audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparaisons;
 # those listed below must thereby be in lower case and without any space
@@ -112,12 +112,12 @@ class FrWiktionary(Wiktionary):
         # Whether there is no entry for this record on frwiktionary
         if not wikicode:
             return False
-
+        '''
         # Whether the record is already inside the entry
         if is_already_present:
             print(record["id"] + "//" + transcription + ": already on frwiktionary")
             return False
-
+        '''
         # Try to extract the section of the language of the record
         language_section = self.get_language_section(
             wikicode, record["language"]["qid"]
@@ -148,6 +148,8 @@ class FrWiktionary(Wiktionary):
             # do not display anything if "native"
             if language_level_id == 'Q15':
                 language_level = ""
+        if language_level:
+            language_level="|niveau=" + language_level
  
         # Add the pronunciation file to the pronunciation section
         self.append_file(
