@@ -11,7 +11,7 @@ from sparql import Sparql
 from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
+SUMMARY = "ଲିଙ୍ଗୁଆ ଲିବ୍ରେରୁ ଏକ ଉଚ୍ଚାରଣ ଅଡ଼ିଓ ଯୋଡ଼ିଲି"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n=== ଉଚ୍ଚାରଣ ===\n$1"
