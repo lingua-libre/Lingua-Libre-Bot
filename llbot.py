@@ -12,6 +12,7 @@ import lili
 
 from wikis.wikidata.wikidata import Wikidata
 from wikis.wiktionaries.frwiktionary import FrWiktionary
+from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
 from wikis.wikidata.lexemes import Lexemes
@@ -31,6 +32,7 @@ def main():
         "wikidatawiki": Wikidata(user, password),
         "lexemes": Lexemes(user, password),
         "frwiktionary":  FrWiktionary(user, password),
+        "kuwiktionary": KuWiktionary(user, password),
         "ocwiktionary":  OcWiktionary(user, password),
         "shywiktionary": ShyWiktionary(user, password),
     }
