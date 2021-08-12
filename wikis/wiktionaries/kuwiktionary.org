@@ -1,7 +1,7 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Antoine "0x010C" Lamielle
-# Date: 9 June 2018
+# Author: Pamputt
+# Date: 11 August 2021
 # License: GNU GPL v2+
 
 import re
@@ -88,14 +88,14 @@ class KuWiktionary(Wiktionary):
 
         return records
 
-    # Try to use the given record on the French Wiktionary
+    # Try to use the given record on the Kurdish Wiktionary
     def execute(self, record):
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
             transcription, record["file"]
         )
 
-        # Whether there is no entry for this record on frwiktionary
+        # Whether there is no entry for this record on kuwiktionary
         if not wikicode:
             return False
 
