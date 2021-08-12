@@ -11,22 +11,11 @@ from sparql import Sparql
 from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
+SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== Bilêvkirin ===\n$1"
 PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}"
-#{{deng|ku|LL-Q36368 (kur)-Mihemed Qers-keskesor.wav|Deng|dever=Qers}}
-# To be sure not to miss any title, they are normalized during comparaisons;
-# those listed below must thereby be in lower case and without any space
-FOLLOWING_SECTIONS = [
-    "{{s|anagrammes}}",
-    "{{s|anagr}}",
-    "{{s|voiraussi}}",
-    "{{s|voir}}",
-    "{{s|références}}",
-    "{{s|réf}}",
-]
 
 LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
 LOCATION_QUERY = """
@@ -230,10 +219,7 @@ class KuWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        section_content.sections[0].contents = self.safe_append_text(
-            section_content.sections[0].contents,
-            pronunciation_line,
-        )
+        section_content.sections[0].contents += pronunciation_line
 
         wikicode.sections[1].contents = str(section_content)
 
@@ -241,17 +227,3 @@ class KuWiktionary(Wiktionary):
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
         )
-
-    # Append a string to a wikitext string, but before any category or sortkey
-    # TODO: probably not needed because we add the pronunciation section
-    # juste after the language section
-    def safe_append_text(self, content, text):
-        content = str(content)
-
-        search = BOTTOM_REGEX.search(content)
-        if search:
-            index = search.start()
-        else:
-            index = len(content)
-
-        return content[:index] + text + content[index:]
