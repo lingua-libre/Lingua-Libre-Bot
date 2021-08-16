@@ -172,10 +172,10 @@ class OcWiktionary(Wiktionary):
         if motif:
             wikicode = re.sub(
                 r"{{="
-                + lang
+                + str(lang)
                 + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|{{-sil-}}|{{-([^\-]*?)\-\|([a-z]+)}}|$)",
                 "{{=" + lang + "=}}\g<1>{{-pron-}}\g<3>",
-                wikicode,
+                str(wikicode),
             )
 
 
