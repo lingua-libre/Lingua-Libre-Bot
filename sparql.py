@@ -84,6 +84,10 @@ class Sparql:
 
     def format_value(self, sparql_result, key):
         if key in sparql_result:
+            #blank value (unknown value)
+            if sparql_result[key]["type"] == "bnode":
+                return None
+
             value = sparql_result[key]["value"]
             if sparql_result[key]["type"] == "uri":
                 if value.startswith(LINGUALIBRE_ENTITY):
