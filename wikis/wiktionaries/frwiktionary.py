@@ -81,7 +81,9 @@ class FrWiktionary(Wiktionary):
         # Extract all different locations
         locations = set()
         for record in records:
-            if record["speaker"]["residence"] is not None:
+            if record["language"]["learning"] is not None:
+                locations.add(record["language"]["learning"])
+            elif record["speaker"]["residence"] is not None:
                 locations.add(record["speaker"]["residence"])
 
         self.location_map = {}
@@ -152,12 +154,18 @@ class FrWiktionary(Wiktionary):
             language_level="|niveau=" + language_level
  
         # Add the pronunciation file to the pronunciation section
+        location = ""
+        if record["language"]["learning"]:
+            location = record["language"]["learning"]
+        else:
+            location = record["speaker"]["residence"]
+
         self.append_file(
             pronunciation_section,
             record["file"],
             record["language"]["qid"],
-            record["speaker"]["residence"],
-            language_level,
+            location,
+            language_level
         )
 
         # Save the result
