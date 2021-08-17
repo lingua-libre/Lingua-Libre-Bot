@@ -114,12 +114,12 @@ class FrWiktionary(Wiktionary):
         # Whether there is no entry for this record on frwiktionary
         if not wikicode:
             return False
-        '''
+        
         # Whether the record is already inside the entry
         if is_already_present:
             print(record["id"] + "//" + transcription + ": already on frwiktionary")
             return False
-        '''
+        
         # Try to extract the section of the language of the record
         language_section = self.get_language_section(
             wikicode, record["language"]["qid"]
