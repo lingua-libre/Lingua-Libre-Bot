@@ -27,11 +27,6 @@ WHERE {
 }
 """
 
-BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Kategorî):[^\]]+\]\])?)*$",
-    re.IGNORECASE,
-)
-
 
 class KuWiktionary(Wiktionary):
 
@@ -90,10 +85,15 @@ class KuWiktionary(Wiktionary):
 
     # Try to use the given record on the Kurdish Wiktionary
     def execute(self, record):
+        transcription = record["transcription"]
+        
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
             transcription, record["file"]
         )
+        if not is_already_present:
+            print(f"--- BEFORE ---\n{wikicode}\n")
+            print("--- END BEFORE ---")
 
         # Whether there is no entry for this record on kuwiktionary
         if not wikicode:
@@ -116,6 +116,9 @@ class KuWiktionary(Wiktionary):
 
         # Try to extract the pronunciation subsection
         pronunciation_section = self.get_pronunciation_section(language_section)
+        print(f"--- PRON SECTION ---\n{pronunciation_section}\n--- END PRON SECTION ---")
+        pronunciation_section = self.clean_section(pronunciation_section)
+        print(f"--- PRON SECTION ---\n{pronunciation_section}\n--- END PRON SECTION ---")
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
@@ -185,25 +188,25 @@ class KuWiktionary(Wiktionary):
 
     # Create a pronunciation subsection
     def create_pronunciation_section(self, wikicode):
-        # The sections order is fixed, etymology, word type (and it's many
-        # subsections, pronunciation, anagram, see also and references)
-        # Travel across the sections until we find one which comes after
-        # the pronunciation section
-        prev_section = wikicode.sections[0]
+        # The pronunciation section is the first one of the language section
+        # It comes just after "=={{ziman|qqq}}=="        
+        lang_section = wikicode.sections[0]
         for section in wikicode.sections:
             if section.title is None:
                 continue
-            # TODO: if not present, add just after the language section
-            if section.title.replace(" ", "").lower() in FOLLOWING_SECTIONS:
+            
+            # Search for the language section
+            if re.search(r'\{\{ziman\|[a-z]+\}\}', section.title.replace(" ", "")):
+                print(f"FOUND -> {section}")
                 break
-            prev_section = section
 
-        # Append an empty pronunication section to the last section which
-        # is not in the following sections list
-        prev_section.contents = self.safe_append_text(
-            prev_section.contents, EMPTY_PRONUNCIATION_SECTION
+            lang_section = section
+
+        # Append an empty pronunication section just after the language section
+        lang_section.contents = self.safe_append_text(
+            lang_section.contents, EMPTY_PRONUNCIATION_SECTION
         )
-
+        
         return self.get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
@@ -219,11 +222,42 @@ class KuWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        section_content.sections[0].contents += pronunciation_line
+        section_content.sections[0].contents = self.safe_append_text(
+            section_content.sections[0].contents,
+            pronunciation_line,
+        )
 
         wikicode.sections[1].contents = str(section_content)
 
+        '''
         # Remove the ugly hack, see comment line 17
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
         )
+        '''
+
+    # Append a string to a wikitext string, just after the language section
+    # (before any section)
+    def safe_append_text(self, content, text):
+        content = str(content)
+
+        search = re.compile(r"===").search(content)
+        if search:
+            index = search.start()
+        else:
+            index = len(content)
+
+        return content[:index] + text + content[index:]
+
+    # Remove blank lines at the end of the section
+    def clean_section(self, section):
+        new_content = "=== " + section.title + " ===\n"
+        content = section.contents
+        
+        for line in content.split("\n"):
+            print(f"{line} -> {len(line)}")
+            print(new_content)
+            if len(line) > 0:
+                new_content += line + "\n"
+
+        return new_content + "\n"
