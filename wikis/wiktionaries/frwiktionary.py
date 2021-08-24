@@ -149,6 +149,7 @@ class FrWiktionary(Wiktionary):
             record["file"],
             record["language"]["qid"],
             location,
+            language_level
         )
 
         # Save the result
