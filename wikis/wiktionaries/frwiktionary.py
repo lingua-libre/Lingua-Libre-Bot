@@ -17,7 +17,7 @@ SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
 PRONUNCIATION_LINE = "\n* {{écouter|$3|$4|lang=$2|audio=$1}}"
 
-# To be sure not to miss any title, they are normalized during comparaisons;
+# To be sure not to miss any title, they are normalized during comparisons;
 # those listed below must thereby be in lower case and without any space
 FOLLOWING_SECTIONS = [
     "{{s|anagrammes}}",
