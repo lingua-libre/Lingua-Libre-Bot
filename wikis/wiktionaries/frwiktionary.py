@@ -93,11 +93,10 @@ class FrWiktionary(Wiktionary):
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
-            self.location_map[sparql.format_value(line, "location")] = country
-            if country != location:
-                self.location_map[sparql.format_value(line, "location")] += (
-                        " (" + location + ")"
-                )
+            if country == location:
+                self.location_map[sparql.format_value(line, "location")] = country
+            else:
+                self.location_map[sparql.format_value(line, "location")] = f"{location} ({country})"
 
         return records
 
@@ -107,19 +106,19 @@ class FrWiktionary(Wiktionary):
         transcription = self.normalize(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(
+        is_already_present, wikicode, basetimestamp = self.get_entry(
             transcription, record["file"]
         )
 
         # Whether there is no entry for this record on frwiktionary
         if not wikicode:
             return False
-        
+
         # Whether the record is already inside the entry
         if is_already_present:
             print(record["id"] + "//" + transcription + ": already on frwiktionary")
             return False
-        
+
         # Try to extract the section of the language of the record
         language_section = self.get_language_section(
             wikicode, record["language"]["qid"]
@@ -151,8 +150,8 @@ class FrWiktionary(Wiktionary):
             if language_level_id == 'Q15':
                 language_level = ""
         if language_level:
-            language_level="|niveau=" + language_level
- 
+            language_level = "|niveau=" + language_level
+
         # Add the pronunciation file to the pronunciation section
         location = ""
         if record["language"]["learning"]:
@@ -257,7 +256,7 @@ class FrWiktionary(Wiktionary):
             location = self.location_map[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
-            language_qid]).replace("$3", location).replace("$4",language_level)
+            language_qid]).replace("$3", location).replace("$4", language_level)
 
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
