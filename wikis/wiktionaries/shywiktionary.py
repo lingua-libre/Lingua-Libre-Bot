@@ -35,7 +35,7 @@ LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
 WHERE {
   ?location wdt:P17 ?country.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, fr" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, shy-latn, fr" . }
   VALUES ?location { wd:$1 }
 }
 """
