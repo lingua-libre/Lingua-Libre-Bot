@@ -42,7 +42,7 @@ class Sparql:
         </body>
         </html>
         '''
-        if response.text.find("504 Gateway Time-out") != -1:
+        if response.status_code == 504:
             print("504 Gateway Time-out\n" \
                   "Try to use --startdate")
             return ""
@@ -60,8 +60,19 @@ class Sparql:
         </body>
         </html>
         '''
-        if response.text.find("Error 429 Too Many Requests") != -1:
+        if response.status_code == 429:
             print("Error 429 Too Many Requests")
+            return ""
+        
+        '''
+        <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <title>Error 403 You have been banned until 2021-09-19T02:42:25.612Z, please respect throttling and retry-after headers.</title>
+        </head>
+        '''
+        if response.status_code == 403:
+            error = re.search('<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
+            print(f"Error 403; {error.group(1)}")
             return ""
         
         ''' MalformedQueryException
