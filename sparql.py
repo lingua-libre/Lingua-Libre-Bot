@@ -8,6 +8,8 @@ import requests
 import json
 import urllib.parse
 import backoff
+import re
+import time
 
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 # Keep both of these below as "http" : that's what's returned by the SPARQL requests
@@ -71,8 +73,12 @@ class Sparql:
         </head>
         '''
         if response.status_code == 403:
+            retry_after = int(response.headers["Retry-After"])
+                              
             error = re.search('<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
-            print(f"Error 403; {error.group(1)}")
+            print(f"Error 403; {error.group(1)}\nWait for {retry_after} seconds")
+                              
+            time.sleep(retry_after)
             return ""
         
         ''' MalformedQueryException
