@@ -1,13 +1,8 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
 # Author: Pamputt
-# Date: 28 September 2021
+# Date: 11 August 2021
 # License: GNU GPL v2+
-
-#NOTE:
-#python3 llbot.py --wiki kuwiktionary --dryrun simple --langwm ku --item Q379244
-#page pour tester l'ajout de section « pron »: porbirr (Q372968)
-#page contenant déjà une section « pron » : gûz (Q379244)
 
 import re
 import wikitextparser as wtp
@@ -20,7 +15,7 @@ SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== Bilêvkirin ===\n$1"
-PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}\n"
+PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}"
 
 LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
 LOCATION_QUERY = """
@@ -67,11 +62,9 @@ class KuWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-        # Extract all different locations
+            # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
             if record["speaker"]["residence"] is not None:
                 locations.add(record["speaker"]["residence"])
 
@@ -98,6 +91,9 @@ class KuWiktionary(Wiktionary):
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
             transcription, record["file"]
         )
+        if not is_already_present:
+            print(f"--- BEFORE ---\n{wikicode}\n")
+            print("--- END BEFORE ---")
 
         # Whether there is no entry for this record on kuwiktionary
         if not wikicode:
@@ -120,26 +116,20 @@ class KuWiktionary(Wiktionary):
 
         # Try to extract the pronunciation subsection
         pronunciation_section = self.get_pronunciation_section(language_section)
+        print(f"--- PRON SECTION ---\n{pronunciation_section}\n--- END PRON SECTION ---")
+        pronunciation_section = self.clean_section(pronunciation_section)
+        print(f"--- PRON SECTION ---\n{pronunciation_section}\n--- END PRON SECTION ---")
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
-        # Choose the location to be displayed with the following order
-        # 1) place of learning
-        # 2) place of residence
-        location = ""
-        if record["language"]["learning"]:
-            location = record["language"]["learning"]
-        else:
-            location = record["speaker"]["residence"]
-            
-        # Add the pronunciation file to the pronunciation subsection
+        # Add the pronunciation file to the pronunciation section
         self.append_file(
             pronunciation_section,
             record["file"],
             record["language"]["qid"],
-            location
+            record["speaker"]["residence"],
         )
 
         # Save the result
@@ -207,15 +197,14 @@ class KuWiktionary(Wiktionary):
             
             # Search for the language section
             if re.search(r'\{\{ziman\|[a-z]+\}\}', section.title.replace(" ", "")):
+                print(f"FOUND -> {section}")
                 break
 
-        lang_section = section
+            lang_section = section
 
-        # Append an empty pronunciation section just after the language section
-        pattern = r"==="
-        #search = re.compile(r"===").search(content)
+        # Append an empty pronunication section just after the language section
         lang_section.contents = self.safe_append_text(
-            lang_section.contents, EMPTY_PRONUNCIATION_SECTION, pattern
+            lang_section.contents, EMPTY_PRONUNCIATION_SECTION
         )
         
         return self.get_pronunciation_section(wikicode)
@@ -230,41 +219,45 @@ class KuWiktionary(Wiktionary):
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
             language_qid]).replace("$3", location)
-        # Add new lines if there are sections after
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        #search = re.compile(r"\n\n").search(content)
-        pattern = r"==="
         section_content.sections[0].contents = self.safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
-            pattern
         )
 
         wikicode.sections[1].contents = str(section_content)
-        
+
+        '''
         # Remove the ugly hack, see comment line 17
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
         )
-        
-        # Remove unneeded blank lines
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
-            "\n\n", ""
-        )
+        '''
 
     # Append a string to a wikitext string, just after the language section
     # (before any section)
-    def safe_append_text(self, content, text, pattern):
+    def safe_append_text(self, content, text):
         content = str(content)
 
-        # la recherche de "===" sert pour l'ajout d'une nouvelle section "pron"
-        # la recherche "\n\n" sert pour ajouter la pron audio dans la section "pron"
-        search = re.compile(pattern).search(content)
+        search = re.compile(r"===").search(content)
         if search:
             index = search.start()
         else:
             index = len(content)
 
         return content[:index] + text + content[index:]
+
+    # Remove blank lines at the end of the section
+    def clean_section(self, section):
+        new_content = "=== " + section.title + " ===\n"
+        content = section.contents
+        
+        for line in content.split("\n"):
+            print(f"{line} -> {len(line)}")
+            print(new_content)
+            if len(line) > 0:
+                new_content += line + "\n"
+
+        return new_content + "\n"
