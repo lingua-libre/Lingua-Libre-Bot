@@ -232,10 +232,15 @@ class KuWiktionary(Wiktionary):
         )
 
         wikicode.sections[1].contents = str(section_content)
-
+        
         # Remove the ugly hack, see comment line 17
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
+        )
+        
+        # Remove unneeded blank lines
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
+            "\n\n", ""
         )
 
     # Append a string to a wikitext string, just after the language section
