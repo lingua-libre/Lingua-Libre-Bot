@@ -32,11 +32,7 @@ def main():
         "wikidatawiki": Wikidata(user, password),
         "lexemes": Lexemes(user, password),
         "frwiktionary":  FrWiktionary(user, password),
-<<<<<<< HEAD
-        "kuwiktionary": KuWiktionary(user, password),
-=======
         "kuwiktionary":  KuWiktionary(user, password),
->>>>>>> Add KuWiktionary to the other other Wiki projects
         "ocwiktionary":  OcWiktionary(user, password),
         "shywiktionary": ShyWiktionary(user, password),
     }
