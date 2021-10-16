@@ -70,6 +70,8 @@ class KuWiktionary(Wiktionary):
         # Extract all different locations
         locations = set()
         for record in records:
+            if record["language"]["learning"] is not None:
+                locations.add(record["language"]["learning"])
             if record["speaker"]["residence"] is not None:
                 locations.add(record["speaker"]["residence"])
 
@@ -123,12 +125,21 @@ class KuWiktionary(Wiktionary):
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
+        # Choose the location to be displayed with the following order
+        # 1) place of learning
+        # 2) place of residence
+        location = ""
+        if record["language"]["learning"]:
+            location = record["language"]["learning"]
+        else:
+            location = record["speaker"]["residence"]
+            
         # Add the pronunciation file to the pronunciation subsection
         self.append_file(
             pronunciation_section,
             record["file"],
             record["language"]["qid"],
-            record["speaker"]["residence"],
+            location
         )
 
         # Save the result
