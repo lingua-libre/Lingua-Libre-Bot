@@ -97,6 +97,22 @@ class Sparql:
             print(f"MalformedQueryException: {error}")
             return ""
         
+        ''' TimeoutException
+        java.util.concurrent.TimeoutException
+        at java.util.concurrent.FutureTask.get(FutureTask.java:205)
+        at com.bigdata.rdf.sail.webapp.BigdataServlet.submitApiTask(BigdataServlet.java:292)
+        at com.bigdata.rdf.sail.webapp.QueryServlet.doSparqlQuery(QueryServlet.java:678)
+        ...
+        '''
+        exceptionName = "TimeoutException"
+        if response.text.find(exceptionName) != -1:
+            error = response.text
+            pos1 = response.text.find("java.util.concurrent."+exceptionName)
+            pos2 = response.text.find("\n",pos1)
+            error = error[pos1:pos2].strip()
+            print(f"TimeoutException: {error}")
+            return "" 
+        
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
