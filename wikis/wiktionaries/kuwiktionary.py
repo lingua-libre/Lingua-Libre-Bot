@@ -19,7 +19,7 @@ SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
-EMPTY_PRONUNCIATION_SECTION = "\n=== Bilêvkirin ===\n$1"
+EMPTY_PRONUNCIATION_SECTION = "=== Bilêvkirin ===\n$1"
 PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}\n"
 
 LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
@@ -136,7 +136,6 @@ class KuWiktionary(Wiktionary):
         else:
             location = record["speaker"]["residence"]
 
-        print(f'{transcription} ({record["language"]["qid"]})' )
         # Add the pronunciation file to the pronunciation subsection
         self.append_file(
             pronunciation_section,
@@ -214,11 +213,18 @@ class KuWiktionary(Wiktionary):
 
         lang_section = section
 
+        # Add a new line before the pronunciation section only
+        # if there is no other section
+        section_content = wtp.parse(wikicode.sections[1].contents)
+        new_section = EMPTY_PRONUNCIATION_SECTION
+        if len(section_content.sections) < 2:
+            new_section = new_section.replace("=== Bilêvkirin","\n=== Bilêvkirin")
+            
         # Append an empty pronunciation section just after the language section
         pattern = r"==="
         #search = re.compile(r"===").search(content)
         lang_section.contents = self.safe_append_text(
-            lang_section.contents, EMPTY_PRONUNCIATION_SECTION, pattern
+            lang_section.contents, new_section, pattern
         )
         
         return self.get_pronunciation_section(wikicode)
