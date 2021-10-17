@@ -75,6 +75,9 @@ class KuWiktionary(Wiktionary):
             if record["speaker"]["residence"] is not None:
                 locations.add(record["speaker"]["residence"])
 
+        # Prepare two location maps
+        # One that contains both the city and the country (for all languages but Kurdish)
+        # One that contains only the city (only for the Kurdish language)
         self.location_map = {}
         self.location_map_with_country = {}
         raw_location_map = sparql.request(
@@ -222,7 +225,6 @@ class KuWiktionary(Wiktionary):
             
         # Append an empty pronunciation section just after the language section
         pattern = r"==="
-        #search = re.compile(r"===").search(content)
         lang_section.contents = self.safe_append_text(
             lang_section.contents, new_section, pattern
         )
@@ -248,7 +250,6 @@ class KuWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        #search = re.compile(r"\n\n").search(content)
         pattern = r"==="
         section_content.sections[0].contents = self.safe_append_text(
             section_content.sections[0].contents,
@@ -273,8 +274,6 @@ class KuWiktionary(Wiktionary):
     def safe_append_text(self, content, text, pattern):
         content = str(content)
 
-        # la recherche de "===" sert pour l'ajout d'une nouvelle section "pron"
-        # la recherche "\n\n" sert pour ajouter la pron audio dans la section "pron"
         search = re.compile(pattern).search(content)
         if search:
             index = search.start()
