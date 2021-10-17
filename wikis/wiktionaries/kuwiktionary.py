@@ -19,7 +19,7 @@ SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
-EMPTY_PRONUNCIATION_SECTION = "\n\n=== Bilêvkirin ===\n$1"
+EMPTY_PRONUNCIATION_SECTION = "\n=== Bilêvkirin ===\n$1"
 PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}\n"
 
 LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
@@ -76,15 +76,17 @@ class KuWiktionary(Wiktionary):
                 locations.add(record["speaker"]["residence"])
 
         self.location_map = {}
+        self.location_map_with_country = {}
         raw_location_map = sparql.request(
             LOCATION_QUERY.replace("$1", " wd:".join(locations))
         )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
-            self.location_map[sparql.format_value(line, "location")] = country
+            self.location_map[sparql.format_value(line, "location")] = location
+            self.location_map_with_country[sparql.format_value(line, "location")] = country
             if country != location:
-                self.location_map[sparql.format_value(line, "location")] += (
+                self.location_map_with_country[sparql.format_value(line, "location")] += (
                         " (" + location + ")"
                 )
 
@@ -133,7 +135,8 @@ class KuWiktionary(Wiktionary):
             location = record["language"]["learning"]
         else:
             location = record["speaker"]["residence"]
-            
+
+        print(f'{transcription} ({record["language"]["qid"]})' )
         # Add the pronunciation file to the pronunciation subsection
         self.append_file(
             pronunciation_section,
@@ -225,8 +228,13 @@ class KuWiktionary(Wiktionary):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
-        if location_qid in self.location_map:
+        if (language_qid == "Q36368" and # Kurdish language on Wikidata
+            location_qid in self.location_map):
             location = self.location_map[location_qid]
+
+        if (language_qid != "Q36368" and
+            location_qid in self.location_map_with_country):
+            location = self.location_map_with_country[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
             language_qid]).replace("$3", location)
