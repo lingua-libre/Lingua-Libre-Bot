@@ -8,6 +8,8 @@ import requests
 import json
 import urllib.parse
 import backoff
+import re
+import time
 
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 # Keep both of these below as "http" : that's what's returned by the SPARQL requests
@@ -42,7 +44,7 @@ class Sparql:
         </body>
         </html>
         '''
-        if response.text.find("504 Gateway Time-out") != -1:
+        if response.status_code == 504:
             print("504 Gateway Time-out\n" \
                   "Try to use --startdate")
             return ""
@@ -60,14 +62,65 @@ class Sparql:
         </body>
         </html>
         '''
-        if response.text.find("Error 429 Too Many Requests") != -1:
+        if response.status_code == 429:
             print("Error 429 Too Many Requests")
             return ""
+        
+        '''
+        <head>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+        <title>Error 403 You have been banned until 2021-09-19T02:42:25.612Z, please respect throttling and retry-after headers.</title>
+        </head>
+        '''
+        if response.status_code == 403:
+            retry_after = int(response.headers["Retry-After"])
+                              
+            error = re.search('<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
+            print(f"Error 403; {error.group(1)}\nWait for {retry_after} seconds")
+                              
+            time.sleep(retry_after)
+            return ""
+        
+        ''' MalformedQueryException
+        ...
+        java.util.concurrent.ExecutionException: org.openrdf.query.MalformedQueryException: Lexical error at line 26, column 64.  Encountered: " " (32), after : "tris"
+        at java.util.concurrent.FutureTask.report(FutureTask.java:122)
+        at java.util.concurrent.FutureTask.get(FutureTask.java:206)
+        ...
+        '''        
+        exceptionName = "MalformedQueryException"
+        if response.text.find(exceptionName + ":") != -1:
+            error = response.text
+            pos1 = response.text.find(exceptionName) + len(exceptionName) + 1
+            pos2 = response.text.find("\n",pos1)
+            error = error[pos1:pos2].strip()
+            print(f"MalformedQueryException: {error}")
+            return ""
+        
+        ''' TimeoutException
+        java.util.concurrent.TimeoutException
+        at java.util.concurrent.FutureTask.get(FutureTask.java:205)
+        at com.bigdata.rdf.sail.webapp.BigdataServlet.submitApiTask(BigdataServlet.java:292)
+        at com.bigdata.rdf.sail.webapp.QueryServlet.doSparqlQuery(QueryServlet.java:678)
+        ...
+        '''
+        exceptionName = "TimeoutException"
+        if response.text.find(exceptionName) != -1:
+            error = response.text
+            pos1 = response.text.find("java.util.concurrent."+exceptionName)
+            pos2 = response.text.find("\n",pos1)
+            error = error[pos1:pos2].strip()
+            print(f"TimeoutException: {error}")
+            return "" 
         
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
         if key in sparql_result:
+            #blank value (unknown value)
+            if sparql_result[key]["type"] == "bnode":
+                return None
+
             value = sparql_result[key]["value"]
             if sparql_result[key]["type"] == "uri":
                 if value.startswith(LINGUALIBRE_ENTITY):

@@ -8,6 +8,7 @@ Lingua Libre Bot is able to contribute on the following Wikimedia projects:
 * Wikidata Lexemes
 * French Wiktionary
 * Occitan Wiktionary
+* Shawiya Wiktionary
 
 ## Operational documentation
 

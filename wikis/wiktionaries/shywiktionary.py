@@ -1,7 +1,7 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Antoine "0x010C" Lamielle
-# Date: 9 June 2018
+# Author: Pamputt
+# Date: 12 July 2021
 # License: GNU GPL v2+
 
 import re
@@ -11,40 +11,41 @@ from sparql import Sparql
 from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
+SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content
-EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
-PRONUNCIATION_LINE = "\n* {{écouter|$3|$4|lang=$2|audio=$1}}"
+EMPTY_PRONUNCIATION_SECTION = "\n==== {{S|Alaɣi}} ====\n$1"
+PRONUNCIATION_LINE = "\n* {{écouter|$3||lang=$2|audio=$1}}"
 
 # To be sure not to miss any title, they are normalized during comparisons;
-# those listed below must thereby be in lower case and without any space
+# those listed bellow must thereby be in lower case and without any space
 FOLLOWING_SECTIONS = [
-    "{{s|anagrammes}}",
-    "{{s|anagr}}",
-    "{{s|voiraussi}}",
-    "{{s|voir}}",
-    "{{s|références}}",
-    "{{s|réf}}",
+    "{{s|iliɣen}}",
+    "====Cuf====",
 ]
 
-LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
+LANGUAGE_QUERY = """
+SELECT ?item ?code ?itemLabel
+WHERE {
+    ?item wdt:P305 ?code.
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, fr" . }
+}
+"""
 LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
 WHERE {
   ?location wdt:P17 ?country.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, shy-latn, fr" . }
   VALUES ?location { wd:$1 }
 }
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Taggayt):[^\]]+\]\])?)*$",
     re.IGNORECASE,
 )
 
-
-class FrWiktionary(Wiktionary):
+class ShyWiktionary(Wiktionary):
 
     def __init__(self, user, password):
         """
@@ -57,15 +58,15 @@ class FrWiktionary(Wiktionary):
         password
             Password to log into the account.
         """
-        super().__init__(user, password, "fr", SUMMARY)
+        super().__init__(user, password, "shy", SUMMARY)
 
     """
     Public methods
     """
 
-    # Prepare the records to be added on the French Wiktionary:
-    # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
-    # - Get the labels of the speaker's location in French
+    # Prepare the records to be added on the Shawiya Wiktionary:
+    # - Fetch the needed language code map (Qid -> BCP 47, used by shywiktionary)
+    # - Get the labels of the speaker's location in Shawiya
     def prepare(self, records):
         sparql = Sparql(SPARQL_ENDPOINT)
 
@@ -78,7 +79,7 @@ class FrWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-        # Extract all different locations
+            # Extract all different locations
         locations = set()
         for record in records:
             if record["language"]["learning"] is not None:
@@ -93,30 +94,31 @@ class FrWiktionary(Wiktionary):
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
-            if country == location:
-                self.location_map[sparql.format_value(line, "location")] = country
-            else:
-                self.location_map[sparql.format_value(line, "location")] = f"{location} ({country})"
+            self.location_map[sparql.format_value(line, "location")] = country
+            if country != location:
+                self.location_map[sparql.format_value(line, "location")] += (
+                        " (" + location + ")"
+                )
 
         return records
 
-    # Try to use the given record on the French Wiktionary
+    # Try to use the given record on the Shawiya Wiktionary
     def execute(self, record):
-        # Normalize the record using frwiktionary's titles conventions
+        # Normalize the record using shywiktionary's titles conventions
         transcription = self.normalize(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
-        is_already_present, wikicode, basetimestamp = self.get_entry(
+        (is_already_present, wikicode, basetimestamp) = self.get_entry(
             transcription, record["file"]
         )
 
-        # Whether there is no entry for this record on frwiktionary
+        # Whether there is no entry for this record on shywiktionary
         if not wikicode:
             return False
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + "//" + transcription + ": already on frwiktionary")
+            print(record["id"] + "//" + transcription + ": already on shywiktionary")
             return False
 
         # Try to extract the section of the language of the record
@@ -136,22 +138,6 @@ class FrWiktionary(Wiktionary):
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
-        # Get the language level of the speaker and convert it to text
-        language_level_id = record["language"]["level"]
-        language_level = ""
-        if language_level_id:
-            if language_level_id == 'Q12':
-                language_level = "débutant"
-            if language_level_id == 'Q13':
-                language_level = "moyen"
-            if language_level_id == 'Q14':
-                language_level = "bon"
-            # do not display anything if "native"
-            if language_level_id == 'Q15':
-                language_level = ""
-        if language_level:
-            language_level = "|niveau=" + language_level
-
         # Add the pronunciation file to the pronunciation section
         location = ""
         if record["language"]["learning"]:
@@ -164,10 +150,10 @@ class FrWiktionary(Wiktionary):
             record["file"],
             record["language"]["qid"],
             location,
-            language_level
         )
 
         # Save the result
+        #print(f"Mot: {transcription}\n{wikicode}")
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
@@ -180,7 +166,7 @@ class FrWiktionary(Wiktionary):
         if result:
             print(
                 record["id"] + "//" + transcription
-                + ": added to frwiktionary - https://fr.wiktionary.org/wiki/"
+                + ": added to shywiktionary - https://shy.wiktionary.org/wiki/"
                 + transcription
             )
 
@@ -190,7 +176,7 @@ class FrWiktionary(Wiktionary):
     Private methods
     """
 
-    # Normalize the transcription to fit frwiktionary's title conventions
+    # Normalize the transcription to fit shywiktionary's title conventions
     def normalize(self, transcription):
         return transcription.replace("'", "’")
 
@@ -220,7 +206,7 @@ class FrWiktionary(Wiktionary):
             if section.title is None:
                 continue
 
-            if section.title.replace(" ", "").lower() == "{{s|prononciation}}":
+            if section.title.replace(" ", "").lower() == "{{s|alaɣi}}":
                 return section
 
         return None
@@ -248,7 +234,7 @@ class FrWiktionary(Wiktionary):
         return self.get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid, location_qid, language_level):
+    def append_file(self, wikicode, filename, language_qid, location_qid):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
@@ -256,8 +242,7 @@ class FrWiktionary(Wiktionary):
             location = self.location_map[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
-            language_qid]).replace("$3", location).replace("$4", language_level)
-
+            language_qid]).replace("$3", location)
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
@@ -267,7 +252,7 @@ class FrWiktionary(Wiktionary):
         )
 
         # Remove the {{ébauche-pron-audio|fr}} if there was one
-        section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
+        # TO REMOVE: section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
 
         wikicode.sections[1].contents = str(section_content)
 
@@ -276,7 +261,7 @@ class FrWiktionary(Wiktionary):
             "$1\n", ""
         )
 
-    # Append a string to a wikitext string, but before any category or sortkey
+    # Append a string to a wikitext string, but before any category
     def safe_append_text(self, content, text):
         content = str(content)
 

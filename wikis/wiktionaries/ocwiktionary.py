@@ -91,7 +91,9 @@ class OcWiktionary(Wiktionary):
             # Extract all different locations
         locations = set()
         for record in records:
-            if record["speaker"]["residence"] != None:
+            if record["language"]["learning"] is not None:
+                locations.add(record["language"]["learning"])
+            elif record["speaker"]["residence"] is not None:
                 locations.add(record["speaker"]["residence"])
 
         self.location_map = {}
@@ -162,28 +164,34 @@ class OcWiktionary(Wiktionary):
 
         motif = re.search(
             r"{{="
-            + lang
+            + str(lang)
             + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|$)",
-            wikicode,
+            str(wikicode),
         )
 
         if motif:
             wikicode = re.sub(
                 r"{{="
-                + lang
+                + str(lang)
                 + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|{{-sil-}}|{{-([^\-]*?)\-\|([a-z]+)}}|$)",
                 "{{=" + lang + "=}}\g<1>{{-pron-}}\g<3>",
-                wikicode,
+                str(wikicode),
             )
 
+
+        learning_or_residence = ""
+        if record["language"]["learning"]:
+            learning_or_residence = record["language"]["learning"]
+        else:
+            learning_or_residence = record["speaker"]["residence"]
         loccode = ""
-        if record["speaker"]["residence"]:
+        if learning_or_residence:
 
             sparql = Sparql(SPARQL_ENDPOINT)
 
             self.location_map = {}
             raw_location_map = sparql.request(
-                LOCATION_QUERY.replace("$1", " wd:" + record["speaker"]["residence"])
+                LOCATION_QUERY.replace("$1", " wd:" + learning_or_residence)
             )
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")
@@ -216,10 +224,10 @@ class OcWiktionary(Wiktionary):
 
         wikicode = re.sub(
             r"\{="
-            + lang
+            + str(lang)
             + "=\}(([^\{]|\{[^=])*?)\{\{-pron-\}\}(([^\{]|\{[^\{]|\{\{[^\-])*?)(\{\{-|\{\{=|$)",
             "{=" + lang + "=}\g<1>{{-pron-}}\g<3>" + codefichier + "\n\g<5>",
-            wikicode,
+            str(wikicode),
         )
 
         # Save the result

@@ -7,6 +7,7 @@
 import configparser
 import argparse
 import os
+import sys
 
 import lili
 
@@ -14,6 +15,7 @@ from wikis.wikidata.wikidata import Wikidata
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.orwiktionary import OrWiktionary
+from wikis.wiktionaries.shywiktionary import ShyWiktionary
 from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
@@ -33,6 +35,7 @@ def main():
         "frwiktionary": FrWiktionary(user, password),
         "ocwiktionary": OcWiktionary(user, password),
         "orwiktionary": OrWiktionary(user, password),
+        "shywiktionary": ShyWiktionary(user, password),
     }
 
     # Declare the command-line arguments
@@ -112,4 +115,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('\nStopping Lingua Libre Bot')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+
