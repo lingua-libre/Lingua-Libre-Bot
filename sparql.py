@@ -96,7 +96,7 @@ class Sparql:
             error = error[pos1:pos2].strip()
             print(f"MalformedQueryException: {error}")
             return ""
-        
+
         ''' TimeoutException
         java.util.concurrent.TimeoutException
         at java.util.concurrent.FutureTask.get(FutureTask.java:205)
@@ -111,8 +111,8 @@ class Sparql:
             pos2 = response.text.find("\n",pos1)
             error = error[pos1:pos2].strip()
             print(f"TimeoutException: {error}")
-            return "" 
-        
+            return ""      
+
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
