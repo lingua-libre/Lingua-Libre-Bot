@@ -45,11 +45,11 @@ class Lexemes(WikiFamily):
         if not re.match("^L\d+-F\d+$", record["links"]["lexeme"]):
             print(record["links"]["lexeme"] + "is not a valid lexeme form id")
 
-        if self.is_already_present(record["links"]["lexeme"], record["file"]):
+        if self.__is_already_present(record["links"]["lexeme"], record["file"]):
             print(record["id"] + ": already on Wikidata")
             return False
 
-        result = self.do_edit(
+        result = self.__do_edit(
             record["links"]["lexeme"],
             record["file"],
             record["id"],
@@ -63,11 +63,7 @@ class Lexemes(WikiFamily):
 
         return result
 
-    """
-    Private methods
-    """
-
-    def is_already_present(self, entityId, filename):
+    def __is_already_present(self, entityId, filename):
         response = self.api.request(
             {
                 "action": "wbgetclaims",
@@ -85,7 +81,7 @@ class Lexemes(WikiFamily):
 
         # Add the given record in a new claim of the given item
 
-    def do_edit(self, entityId, filename, lingualibreId):
+    def __do_edit(self, entityId, filename, lingualibreId):
         response = self.api.request(
             {
                 "action": "wbsetclaim",
