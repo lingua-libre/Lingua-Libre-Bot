@@ -4,19 +4,18 @@
 # Date: 9 June 2018
 # License: GNU GPL v2+
 
-import configparser
 import argparse
+import configparser
 import os
 import sys
 
 import lili
-
+from wikis.wikidata.lexemes import Lexemes
 from wikis.wikidata.wikidata import Wikidata
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
-from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
 res = config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
@@ -38,7 +37,28 @@ def main():
         "shywiktionary": ShyWiktionary(user, password),
     }
 
-    # Declare the command-line arguments
+    parser = create_parser(supported_wikis)
+    args = parser.parse_args()
+
+    # Make sure a mode has been selected
+    if 'func' not in args:
+        parser.error("Please provide a mode (either \"simple\" or \"live\")")
+
+    # Filter the wikis depending on the fetched arguments
+    if args.wiki is not None:
+        tmp = supported_wikis[args.wiki]
+        supported_wikis = {args.wiki: tmp}
+
+    if args.dryrun:
+        for dbname in supported_wikis:
+            supported_wikis[dbname].set_dry_run()
+
+    # Start the bot in the selected mode (simple or live)
+    items = args.func(args, supported_wikis)
+    print(len(items))
+
+
+def create_parser(supported_wikis):
     parser = argparse.ArgumentParser(
         description="Reuse records made on Lingua Libre on some wikis."
     )
@@ -53,7 +73,6 @@ def main():
         help="show the result without actually doing any edit"
     )
     subparsers = parser.add_subparsers(title="Execution modes")
-
     simpleparser = subparsers.add_parser(
         "simple", help="Run llbot on (a subset of) all items"
     )
@@ -75,7 +94,6 @@ def main():
         "--langwm",
         help="run only on records from the given language, identified by its wikimedia code",
     )
-
     liveparser = subparsers.add_parser(
         "live", help="Run llbot in (hardly) real time based on Recent Changes"
     )
@@ -92,26 +110,7 @@ def main():
         type=int,
         default=0,
     )
-
-    # Parse the command-line arguments
-    args = parser.parse_args()
-
-    # Make sure a mode has been selected
-    if 'func' not in args:
-        parser.error("Please provide a mode (either \"simple\" or \"live\")")
-
-    # Filter the wikis depending on the fetched arguments
-    if args.wiki is not None:
-        tmp = supported_wikis[args.wiki]
-        supported_wikis = {args.wiki: tmp}
-
-    if args.dryrun:
-        for dbname in supported_wikis:
-            supported_wikis[dbname].set_dry_run()
-
-    # Start the bot in the selected mode (simple or live)
-    items = args.func(args, supported_wikis)
-    print(len(items))
+    return parser
 
 
 if __name__ == "__main__":
