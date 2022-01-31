@@ -3,7 +3,7 @@ import datetime
 import requests
 import json
 from sparql import Sparql
-
+from speaker import Speaker
 
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
@@ -56,6 +56,10 @@ def get_records(query):
     print("Request done")
     records = []
     for record in raw_records:
+        speaker = Speaker(id=sparql.format_value(record, "speaker"),
+                          name=sparql.format_value(record, "speakerLabel"),
+                          gender=sparql.format_value(record, "gender"),
+                          residence=sparql.format_value(record, "residence"))
         records += [
             {
                 "id": sparql.format_value(record, "record"),
@@ -64,12 +68,7 @@ def get_records(query):
                 "transcription": sparql.format_value(record, "transcription"),
                 "qualifier": sparql.format_value(record, "qualifier"),
                 "user": sparql.format_value(record, "linkeduser"),
-                "speaker": {
-                    "id": sparql.format_value(record, "speaker"),
-                    "name": sparql.format_value(record, "speakerLabel"),
-                    "gender": sparql.format_value(record, "gender"),
-                    "residence": sparql.format_value(record, "residence"),
-                },
+                "speaker": speaker,
                 "links": {
                     "wikidata": sparql.format_value(record, "wikidataId"),
                     "lexeme": sparql.format_value(record, "lexemeId"),

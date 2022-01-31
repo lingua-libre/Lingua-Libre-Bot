@@ -83,8 +83,8 @@ class FrWiktionary(Wiktionary):
         for record in records:
             if record["language"]["learning"] is not None:
                 locations.add(record["language"]["learning"])
-            elif record["speaker"]["residence"] is not None:
-                locations.add(record["speaker"]["residence"])
+            elif record["speaker"].residence is not None:
+                locations.add(record["speaker"].residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(
@@ -157,7 +157,7 @@ class FrWiktionary(Wiktionary):
         if record["language"]["learning"]:
             location = record["language"]["learning"]
         else:
-            location = record["speaker"]["residence"]
+            location = record["speaker"].residence
 
         self.append_file(
             pronunciation_section,
