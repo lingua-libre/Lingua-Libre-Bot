@@ -35,7 +35,6 @@ class Wikidata(WikiFamily):
     Public methods
     """
 
-    # Prepare all the records for their use on Wikidata
     def prepare(self, records):
         # Resolve all redirects
         qids = []
@@ -60,8 +59,8 @@ class Wikidata(WikiFamily):
         links = {}
         for record in records:
             if (
-                record["links"]["wikidata"] is None
-                and record["links"]["wikipedia"] is not None
+                    record["links"]["wikidata"] is None
+                    and record["links"]["wikipedia"] is not None
             ):
                 (lang, title) = record["links"]["wikipedia"].split(":", 1)
                 if lang not in links:
@@ -79,8 +78,8 @@ class Wikidata(WikiFamily):
 
         for record in records:
             if (
-                record["links"]["wikidata"] is None
-                and record["links"]["wikipedia"] is not None
+                    record["links"]["wikidata"] is None
+                    and record["links"]["wikipedia"] is not None
             ):
                 if record["links"]["wikipedia"] in connections:
                     record["links"]["wikidata"] = connections[
@@ -89,8 +88,7 @@ class Wikidata(WikiFamily):
 
         return records
 
-        # Try to use the given record on Wikidata
-
+    # Try to use the given record on Wikidata
     def execute(self, record):
         if record["links"]["wikidata"] is None:
             return False
@@ -159,8 +157,8 @@ class Wikidata(WikiFamily):
         if "entities" in response:
             for qid in response["entities"]:
                 if (
-                    "labels" in response["entities"][qid]
-                    and lang in response["entities"][qid]["labels"]
+                        "labels" in response["entities"][qid]
+                        and lang in response["entities"][qid]["labels"]
                 ):
                     title = response["entities"][qid]["sitelinks"][dbname]["title"]
                     label = response["entities"][qid]["labels"][lang]["value"]
@@ -168,8 +166,8 @@ class Wikidata(WikiFamily):
                     # Only make a connections if the WP title is equal to
                     # the label on Wikidata
                     if (
-                        BRACKET_REGEX.sub("", title).lower()
-                        == BRACKET_REGEX.sub("", label).lower()
+                            BRACKET_REGEX.sub("", title).lower()
+                            == BRACKET_REGEX.sub("", label).lower()
                     ):
                         connections[lang + ":" + title] = qid
                     else:
@@ -210,26 +208,26 @@ class Wikidata(WikiFamily):
                 "action": "wbsetclaim",
                 "format": "json",
                 "claim": '{"type":"statement","mainsnak":{"snaktype":"value","property":"'
-                + PRONUNCIATION_PROPERTY
-                + '","datavalue":{"type":"string","value":"'
-                + filename
-                + '"}},"id":"'
-                + entityId
-                + "$"
-                + str(uuid.uuid4())
-                + '","qualifiers":{"'
-                + LANG_PROPERTY
-                + '":[{"snaktype":"value","property":"'
-                + LANG_PROPERTY
-                + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
-                + language
-                + '"}}}]},"references":[{"snaks":{"'
-                + REFURL_PROPERTY
-                + '":[{"snaktype":"value","property":"'
-                + REFURL_PROPERTY
-                + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
-                + lingualibreId
-                + '"}}]}}],"rank":"normal"}',
+                         + PRONUNCIATION_PROPERTY
+                         + '","datavalue":{"type":"string","value":"'
+                         + filename
+                         + '"}},"id":"'
+                         + entityId
+                         + "$"
+                         + str(uuid.uuid4())
+                         + '","qualifiers":{"'
+                         + LANG_PROPERTY
+                         + '":[{"snaktype":"value","property":"'
+                         + LANG_PROPERTY
+                         + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
+                         + language
+                         + '"}}}]},"references":[{"snaks":{"'
+                         + REFURL_PROPERTY
+                         + '":[{"snaktype":"value","property":"'
+                         + REFURL_PROPERTY
+                         + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
+                         + lingualibreId
+                         + '"}}]}}],"rank":"normal"}',
                 "summary": SUMMARY,
                 "token": self.api.get_csrf_token(),
                 "bot": 1,
