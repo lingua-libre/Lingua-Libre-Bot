@@ -5,6 +5,8 @@
 # License: GNU GPL v2+
 
 import abc
+from typing import List, Any
+
 import pywiki
 
 
@@ -47,14 +49,18 @@ class WikiFamily(abc.ABC):
         """
         self.api.set_dry_run(True)
 
-    """
-    Abstract methods
-    """
+    def prepare(self, records):
+        """
+        Prepare the records to be added to pages.
+        @param records: the list of records to prepare
+        @return: the list of prepared records
+        """
+        return records
 
     @abc.abstractmethod
     def execute(self, record):
-        return None
+        """
+        Add the records to the pages.
+        @param record: the list of records to add
+        """
 
-    @abc.abstractmethod
-    def prepare(self, records):
-        return records
