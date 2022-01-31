@@ -34,7 +34,7 @@ class Lexemes(WikiFamily):
         if record["links"]["lexeme"] is None:
             return False
 
-        if not re.match("^L\d+-F\d+$", record["links"]["lexeme"]):
+        if not re.match(r"^L\d+-F\d+$", record["links"]["lexeme"]):
             print(record["links"]["lexeme"] + "is not a valid lexeme form id")
 
         if self.__is_already_present(record["links"]["lexeme"], record["file"]):
