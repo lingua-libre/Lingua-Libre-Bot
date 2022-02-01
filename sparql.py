@@ -4,13 +4,12 @@
 # Date: 11 June 2018
 # License: GNU GPL v2+
 
+import requests
 import json
+import urllib.parse
+import backoff
 import re
 import time
-import urllib.parse
-
-import backoff
-import requests
 
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 # Keep both of these below as "http" : that's what's returned by the SPARQL requests
@@ -20,19 +19,22 @@ COMMONS_FILEPATH = u"http://commons.wikimedia.org/wiki/Special:FilePath/"
 
 class Sparql:
 
+    """
+    Constructor
+    """
+
     def __init__(self, endpoint):
         self.endpoint = endpoint
 
     # TODO better handle the exceptions coming from this
-    @backoff.on_exception(backoff.expo,
-                          exception=(requests.exceptions.Timeout,
-                                     requests.exceptions.ConnectionError,
-                                     requests.exceptions.ChunkedEncodingError,
-                                     json.decoder.JSONDecodeError),
+    @backoff.on_exception(backoff.expo, exception=(requests.exceptions.Timeout,
+                                                   requests.exceptions.ConnectionError,
+                                                   requests.exceptions.ChunkedEncodingError,
+                                                   json.decoder.JSONDecodeError),
                           max_tries=5)
     def request(self, query):
         response = requests.post(self.endpoint, data={"format": "json", "query": query})
-
+        
         ''' 504 error
         <html>
         <head><title>504 Gateway Time-out</title></head>
@@ -43,7 +45,7 @@ class Sparql:
         </html>
         '''
         if response.status_code == 504:
-            print("504 Gateway Time-out\n"
+            print("504 Gateway Time-out\n" \
                   "Try to use --startdate")
             return ""
 
@@ -63,7 +65,7 @@ class Sparql:
         if response.status_code == 429:
             print("Error 429 Too Many Requests")
             return ""
-
+        
         '''
         <head>
         <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
@@ -72,25 +74,25 @@ class Sparql:
         '''
         if response.status_code == 403:
             retry_after = int(response.headers["Retry-After"])
-
-            error = re.search(r'<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
+                              
+            error = re.search('<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
             print(f"Error 403; {error.group(1)}\nWait for {retry_after} seconds")
-
+                              
             time.sleep(retry_after)
             return ""
-
+        
         ''' MalformedQueryException
         ...
         java.util.concurrent.ExecutionException: org.openrdf.query.MalformedQueryException: Lexical error at line 26, column 64.  Encountered: " " (32), after : "tris"
         at java.util.concurrent.FutureTask.report(FutureTask.java:122)
         at java.util.concurrent.FutureTask.get(FutureTask.java:206)
         ...
-        '''
+        '''        
         exceptionName = "MalformedQueryException"
         if response.text.find(exceptionName + ":") != -1:
             error = response.text
             pos1 = response.text.find(exceptionName) + len(exceptionName) + 1
-            pos2 = response.text.find("\n", pos1)
+            pos2 = response.text.find("\n",pos1)
             error = error[pos1:pos2].strip()
             print(f"MalformedQueryException: {error}")
             return ""
@@ -105,17 +107,17 @@ class Sparql:
         exceptionName = "TimeoutException"
         if response.text.find(exceptionName) != -1:
             error = response.text
-            pos1 = response.text.find("java.util.concurrent." + exceptionName)
-            pos2 = response.text.find("\n", pos1)
+            pos1 = response.text.find("java.util.concurrent."+exceptionName)
+            pos2 = response.text.find("\n",pos1)
             error = error[pos1:pos2].strip()
             print(f"TimeoutException: {error}")
-            return ""
+            return ""      
 
         return json.loads(response.text)["results"]["bindings"]
 
     def format_value(self, sparql_result, key):
         if key in sparql_result:
-            # blank value (unknown value)
+            #blank value (unknown value)
             if sparql_result[key]["type"] == "bnode":
                 return None
 
