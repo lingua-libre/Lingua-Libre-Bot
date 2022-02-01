@@ -72,8 +72,8 @@ class KuWiktionary(Wiktionary):
         for record in records:
             if record["language"]["learning"] is not None:
                 locations.add(record["language"]["learning"])
-            if record["speaker"].residence is not None:
-                locations.add(record["speaker"].residence)
+            if record["speaker"]["residence"] is not None:
+                locations.add(record["speaker"]["residence"])
 
         # Prepare two location maps
         # One that contains both the city and the country (for all languages but Kurdish)
@@ -137,7 +137,7 @@ class KuWiktionary(Wiktionary):
         if record["language"]["learning"]:
             location = record["language"]["learning"]
         else:
-            location = record["speaker"].residence
+            location = record["speaker"]["residence"]
 
         # Add the pronunciation file to the pronunciation subsection
         self.append_file(
