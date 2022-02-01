@@ -4,12 +4,14 @@
 # Date: 5 June 2021
 # License: GNU GPL v2+
 
-import abc
+from abc import ABC, abstractmethod
+from typing import List
 
 import pywiki
+from record import Record
 
 
-class WikiFamily(abc.ABC):
+class WikiFamily(ABC):
     """
     Provides the backbone of the implementation of the bot on any family of wikis.
     This abstract class provides a frame with the basic variables and methods.
@@ -17,7 +19,7 @@ class WikiFamily(abc.ABC):
     (such as Wiktionary for the Wiktionaries).
     """
 
-    def __init__(self, user, password, wiki_family: str, language_domain: str):
+    def __init__(self, user: str, password: str, wiki_family: str, language_domain: str):
         """
         Constructor.
 
@@ -48,7 +50,7 @@ class WikiFamily(abc.ABC):
         """
         self.api.set_dry_run(True)
 
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         """
         Prepare the records to be added to pages.
         @param records: the list of records to prepare
@@ -56,9 +58,9 @@ class WikiFamily(abc.ABC):
         """
         return records
 
-    @abc.abstractmethod
-    def execute(self, record):
+    @abstractmethod
+    def execute(self, record: Record) -> bool:
         """
-        Add the records to the pages.
+        Add the record to the pages.
         @param record: the list of records to add
         """

@@ -15,7 +15,7 @@ SANITIZE_REGEX = re.compile(r"== +\n")
 
 class Wiktionary(WikiFamily, abc.ABC):
 
-    def __init__(self, user, password, language_domain: str, summary: str):
+    def __init__(self, user: str, password: str, language_domain: str, summary: str):
         """
         Constructor.
 
@@ -39,7 +39,7 @@ class Wiktionary(WikiFamily, abc.ABC):
 
     # Fetch the contents of the given Wiktionary entry,
     # and check by the way whether the file is already in it.
-    def get_entry(self, pagename, filename):
+    def get_entry(self, pagename: str, filename: str):
         response = self.api.request(
             {
                 "action": "query",

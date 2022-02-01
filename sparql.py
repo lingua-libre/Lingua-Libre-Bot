@@ -113,19 +113,19 @@ class Sparql:
 
         return json.loads(response.text)["results"]["bindings"]
 
-    def format_value(self, sparql_result, key):
-        if key in sparql_result:
-            # blank value (unknown value)
-            if sparql_result[key]["type"] == "bnode":
-                return None
+    @staticmethod
+    def format_value(sparql_result, key):
+        if key not in sparql_result:
+            return None
+        if sparql_result[key]["type"] == "bnode":
+            return None
 
-            value = sparql_result[key]["value"]
-            if sparql_result[key]["type"] == "uri":
-                if value.startswith(LINGUALIBRE_ENTITY):
-                    value = value[len(LINGUALIBRE_ENTITY):]
-                if value.startswith(WIKIDATA_ENTITY):
-                    value = value[len(WIKIDATA_ENTITY):]
-                if value.startswith(COMMONS_FILEPATH):
-                    value = urllib.parse.unquote(value[len(COMMONS_FILEPATH):])
-            return value
-        return None
+        value = sparql_result[key]["value"]
+        if sparql_result[key]["type"] == "uri":
+            if value.startswith(LINGUALIBRE_ENTITY):
+                value = value[len(LINGUALIBRE_ENTITY):]
+            if value.startswith(WIKIDATA_ENTITY):
+                value = value[len(WIKIDATA_ENTITY):]
+            if value.startswith(COMMONS_FILEPATH):
+                value = urllib.parse.unquote(value[len(COMMONS_FILEPATH):])
+        return value

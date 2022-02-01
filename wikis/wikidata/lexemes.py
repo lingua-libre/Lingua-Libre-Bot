@@ -7,6 +7,7 @@
 import re
 import uuid
 
+from record import Record
 from wikis.wikifamily import WikiFamily
 
 PRONUNCIATION_PROPERTY = "P443"
@@ -17,7 +18,7 @@ BRACKET_REGEX = re.compile(r" \([^(]+\)$")
 
 class Lexemes(WikiFamily):
 
-    def __init__(self, user, password):
+    def __init__(self, user: str, password: str):
         """
         Constructor.
 
@@ -30,32 +31,38 @@ class Lexemes(WikiFamily):
         """
         super().__init__(user, password, "wikidata", "www")
 
-    def execute(self, record):
-        if record["links"]["lexeme"] is None:
+    def execute(self, record: Record) -> bool:
+        if record.links["lexeme"] is None:
             return False
 
-        if not re.match(r"^L\d+-F\d+$", record["links"]["lexeme"]):
-            print(record["links"]["lexeme"] + "is not a valid lexeme form id")
+        if not re.match(r"^L\d+-F\d+$", record.links["lexeme"]):
+            print(record.links["lexeme"] + "is not a valid lexeme form id")
 
-        if self.__is_already_present(record["links"]["lexeme"], record["file"]):
-            print(record["id"] + ": already on Wikidata")
+        if self.__is_already_present(record.links["lexeme"], record.file):
+            print(f"{record.id}: already on Wikidata")
             return False
 
         result = self.__do_edit(
-            record["links"]["lexeme"],
-            record["file"],
-            record["id"],
+            record.links["lexeme"],
+            record.file,
+            record.id,
         )
-        if result is True:
+        if result:
             print(
-                record["id"]
+                record.id
                 + ": added to Wikidata - https://www.wikidata.org/wiki/Lexeme:"
-                + record["links"]["lexeme"].replace("-", "#")
+                + record.links["lexeme"].replace("-", "#")
             )
 
         return result
 
-    def __is_already_present(self, entity_id, filename):
+    def __is_already_present(self, entity_id: str, filename: str) -> bool:
+        """
+
+        @param entity_id:
+        @param filename:
+        @return:
+        """
         response = self.api.request(
             {
                 "action": "wbgetclaims",
@@ -71,9 +78,14 @@ class Lexemes(WikiFamily):
                     return True
         return False
 
-        # Add the given record in a new claim of the given item
-
-    def __do_edit(self, entity_id, filename, lingualibre_id):
+    def __do_edit(self, entity_id: str, filename: str, lingualibre_id: str) -> bool:
+        """
+        Add the given record in a new claim of the given item.
+        @param entity_id:
+        @param filename:
+        @param lingualibre_id:
+        @return:
+        """
         response = self.api.request(
             {
                 "action": "wbsetclaim",

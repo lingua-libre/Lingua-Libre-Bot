@@ -5,8 +5,11 @@
 # License: GNU GPL v2+
 
 import re
+from typing import List
+
 import wikitextparser as wtp
 
+from record import Record
 from sparql import Sparql
 from wikis.wiktionary import Wiktionary
 
@@ -48,7 +51,7 @@ BOTTOM_REGEX = re.compile(
 
 class ShyWiktionary(Wiktionary):
 
-    def __init__(self, user, password):
+    def __init__(self, user: str, password: str):
         """
         Constructor.
 
@@ -68,7 +71,7 @@ class ShyWiktionary(Wiktionary):
     # Prepare the records to be added on the Shawiya Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by shywiktionary)
     # - Get the labels of the speaker's location in Shawiya
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         sparql = Sparql(SPARQL_ENDPOINT)
 
         # Get BCP 47 language code map
@@ -83,10 +86,10 @@ class ShyWiktionary(Wiktionary):
             # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
-            elif record["speaker"].residence is not None:
-                locations.add(record["speaker"].residence)
+            if record.language["learning"] is not None:
+                locations.add(record.language["learning"])
+            elif record.speaker.residence is not None:
+                locations.add(record.speaker.residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(
@@ -104,13 +107,13 @@ class ShyWiktionary(Wiktionary):
         return records
 
     # Try to use the given record on the Shawiya Wiktionary
-    def execute(self, record):
+    def execute(self, record: Record) -> bool:
         # Normalize the record using shywiktionary's titles conventions
-        transcription = self.normalize(record["transcription"])
+        transcription = self.__normalize(record.transcription)
 
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record["file"]
+            transcription, record.file
         )
 
         # Whether there is no entry for this record on shywiktionary
@@ -119,37 +122,33 @@ class ShyWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + "//" + transcription + ": already on shywiktionary")
+            print(record.id + "//" + transcription + ": already on shywiktionary")
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.get_language_section(
-            wikicode, record["language"]["qid"]
+        language_section = self.__get_language_section(
+            wikicode, record.language["qid"]
         )
 
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + "//" + transcription + ": language section not found")
+            print(record.id + "//" + transcription + ": language section not found")
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.get_pronunciation_section(language_section)
+        pronunciation_section = self.__get_pronunciation_section(language_section)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
-            pronunciation_section = self.create_pronunciation_section(language_section)
+            pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Add the pronunciation file to the pronunciation section
-        location = ""
-        if record["language"]["learning"]:
-            location = record["language"]["learning"]
-        else:
-            location = record["speaker"].residence
+        location = record.language["learning"] or record.speaker.residence
 
-        self.append_file(
+        self.__append_file(
             pronunciation_section,
-            record["file"],
-            record["language"]["qid"],
+            record.file,
+            record.language["qid"],
             location,
         )
 
@@ -158,31 +157,26 @@ class ShyWiktionary(Wiktionary):
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
-            # If we got an editconflict, just restart from the beginning
-            if str(e).find("editconflict") > -1:
+            if 'editconflict' in str(e):
                 self.execute(record)
             else:
                 raise e
-
         if result:
             print(
-                record["id"] + "//" + transcription
+                record.id + "//" + transcription
                 + ": added to shywiktionary - https://shy.wiktionary.org/wiki/"
                 + transcription
             )
 
         return result
 
-    """
-    Private methods
-    """
-
     # Normalize the transcription to fit shywiktionary's title conventions
-    def normalize(self, transcription):
+    @staticmethod
+    def __normalize(transcription: str) -> str:
         return transcription.replace("'", "’")
 
     # Try to extract the language section
-    def get_language_section(self, wikicode, language_qid):
+    def __get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
             return None
@@ -202,7 +196,8 @@ class ShyWiktionary(Wiktionary):
         return None
 
     # Try to extract the pronunciation subsection
-    def get_pronunciation_section(self, wikicode):
+    @staticmethod
+    def __get_pronunciation_section(wikicode):
         for section in wikicode.sections:
             if section.title is None:
                 continue
@@ -213,7 +208,7 @@ class ShyWiktionary(Wiktionary):
         return None
 
     # Create a pronunciation subsection
-    def create_pronunciation_section(self, wikicode):
+    def __create_pronunciation_section(self, wikicode):
         # The sections order is fixed, etymology, word type (and it's many
         # subsections, pronunciation, anagram, see also and references)
         # Travel across the sections until we find one which comes after
@@ -228,14 +223,14 @@ class ShyWiktionary(Wiktionary):
 
         # Append an empty pronunication section to the last section which
         # is not in the following sections list
-        prev_section.contents = self.safe_append_text(
+        prev_section.contents = self.__safe_append_text(
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION
         )
 
-        return self.get_pronunciation_section(wikicode)
+        return self.__get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid, location_qid):
+    def __append_file(self, wikicode, filename, language_qid, location_qid):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
@@ -247,7 +242,7 @@ class ShyWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        section_content.sections[0].contents = self.safe_append_text(
+        section_content.sections[0].contents = self.__safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
         )
@@ -263,13 +258,10 @@ class ShyWiktionary(Wiktionary):
         )
 
     # Append a string to a wikitext string, but before any category
-    def safe_append_text(self, content, text):
+    @staticmethod
+    def __safe_append_text(content, text):
         content = str(content)
 
         search = BOTTOM_REGEX.search(content)
-        if search:
-            index = search.start()
-        else:
-            index = len(content)
-
+        index = search.start() if search else len(content)
         return content[:index] + text + content[index:]
