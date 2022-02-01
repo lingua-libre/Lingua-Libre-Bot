@@ -45,7 +45,7 @@ WHERE {
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Categoria):[^]+]]]clé de tri\|[^}]+}})?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Categoria):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
 
@@ -138,7 +138,7 @@ class OcWiktionary(Wiktionary):
 
         lang = self.language_code_map[record["language"]["qid"]]
 
-        motvar = re.search(r"^oc-([^\-]*?)(-|$)", lang)
+        motvar = re.search(r"^oc\-([^\-]*?)(\-|$)", lang)
 
         labelvar = False
 
@@ -165,7 +165,7 @@ class OcWiktionary(Wiktionary):
         motif = re.search(
             r"{{="
             + str(lang)
-            + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|$)",
+            + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|$)",
             str(wikicode),
         )
 
@@ -173,7 +173,7 @@ class OcWiktionary(Wiktionary):
             wikicode = re.sub(
                 r"{{="
                 + str(lang)
-                + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|{{-sil-}}|{{-([^\-]*?)-\|([a-z]+)}}|$)",
+                + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|{{-sil-}}|{{-([^\-]*?)\-\|([a-z]+)}}|$)",
                 "{{=" + lang + "=}}\g<1>{{-pron-}}\g<3>",
                 str(wikicode),
             )

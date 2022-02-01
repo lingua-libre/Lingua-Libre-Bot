@@ -39,7 +39,7 @@ WHERE {
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Catégorie):[^]]+]]|{{clé de tri\|[^}]+}})?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
 
