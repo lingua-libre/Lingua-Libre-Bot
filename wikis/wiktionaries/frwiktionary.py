@@ -181,6 +181,11 @@ class FrWiktionary(Wiktionary):
 
         return result
 
+    # Normalize the transcription to fit frwiktionary's title conventions
+    @staticmethod
+    def __normalize(transcription):
+        return transcription.replace("'", "’")
+
     # Try to extract the language section
     def __get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
