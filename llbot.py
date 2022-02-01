@@ -50,8 +50,8 @@ def main():
         supported_wikis = {args.wiki: tmp}
 
     if args.dryrun:
-        for supported_wiki in supported_wikis.values():
-            supported_wiki.set_dry_run()
+        for dbname in supported_wikis:
+            supported_wikis[dbname].set_dry_run()
 
     # Start the bot in the selected mode (simple or live)
     items = args.func(args, supported_wikis)

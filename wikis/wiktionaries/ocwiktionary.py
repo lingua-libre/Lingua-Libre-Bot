@@ -5,11 +5,8 @@
 # License: GNU GPL v2+
 
 import re
-from typing import List
-
 import wikitextparser as wtp
 
-from record import Record
 from sparql import Sparql
 from wikis.wiktionary import Wiktionary
 
@@ -55,7 +52,7 @@ BOTTOM_REGEX = re.compile(
 
 class OcWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str):
+    def __init__(self, user, password):
         """
         Constructor.
 
@@ -67,13 +64,15 @@ class OcWiktionary(Wiktionary):
             Password to log into the account.
         """
         super().__init__(user, password, "oc", SUMMARY)
-        self.language_code_map = {}
-        self.language_label_map = {}
+
+    """
+    Public methods
+    """
 
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by ocwiktionary)
     # - Get the labels of the speaker's location in French
-    def prepare(self, records: List[Record]) -> List[Record]:
+    def prepare(self, records):
         sparql = Sparql(SPARQL_ENDPOINT)
 
         # Get BCP 47 language code map
@@ -92,10 +91,10 @@ class OcWiktionary(Wiktionary):
             # Extract all different locations
         locations = set()
         for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            elif record.speaker.residence is not None:
-                locations.add(record.speaker.residence)
+            if record["language"]["learning"] is not None:
+                locations.add(record["language"]["learning"])
+            elif record["speaker"].residence is not None:
+                locations.add(record["speaker"].residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(
@@ -112,17 +111,16 @@ class OcWiktionary(Wiktionary):
 
         return records
 
-    def execute(self, record: Record) -> bool:
-        """
-        Try to use the given record on the Occitan Wiktionary.
-        @param record:
-        @return:
-        """
+        # Try to use the given record on the Occitan Wiktionary
+
+    def execute(self, record):
         # Normalize the record using ocwiktionary's titles conventions
-        transcription = self.__normalize(record.transcription)
+        transcription = self.normalize(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(transcription, record.file)
+        (is_already_present, wikicode, basetimestamp) = self.get_entry(
+            transcription, record["file"]
+        )
 
         # Whether there is no entry for this record on ocwiktionary
         if not wikicode:
@@ -130,37 +128,39 @@ class OcWiktionary(Wiktionary):
 
             # Whether the record is already inside the entry
         if is_already_present:
-            print(f"{record.id}: already on ocwiktionary")
+            print(record["id"] + ": already on ocwiktionary")
             return False
 
             # Check if the record's language has a BCP 47 code, stop here if not
-        if record.language["qid"] not in self.language_code_map:
-            print(f"{record.id}: language code not found")
+        if record["language"]["qid"] not in self.language_code_map:
+            print(record["id"] + ": language code not found")
             return False
 
-        lang = self.language_code_map[record.language["qid"]]
+        lang = self.language_code_map[record["language"]["qid"]]
 
         motvar = re.search(r"^oc-([^\-]*?)(-|$)", lang)
 
         labelvar = False
 
         if motvar:
-            if record.language["qid"] in self.language_label_map:
-                labelvar = self.language_label_map[record.language["qid"]]
+            codevar = motvar.group(1)
+            if record["language"]["qid"] in self.language_label_map:
+                labelvar = self.language_label_map[record["language"]["qid"]]
             lang = "oc"
 
-        # Whether there is no section for the current language
+            # Whether there is no section for the current language
         if "{=" + lang + "=}" not in wikicode:
-            print(f"{record.id}: language section not found")
+            print(record["id"] + ": language section not found")
             return False
 
         motif = ""
         stringlg = "{=" + lang + "=}"
-        for i in range(len(stringlg)):
+        for i in range(0, len(stringlg)):
+            lettre = stringlg[i]
             if i > 0:
-                motif += "|"
-            motif += stringlg[:i].replace("{", "\{")
-            motif += "[^" + stringlg[i].replace("{", "\{") + "]"
+                motif = motif + "|"
+            motif = motif + stringlg[0:i].replace("{", "\{")
+            motif = motif + "[^" + stringlg[i].replace("{", "\{") + "]"
 
         motif = re.search(
             r"{{="
@@ -178,9 +178,14 @@ class OcWiktionary(Wiktionary):
                 str(wikicode),
             )
 
-        learning_or_residence = record.language["learning"] or record.speaker.residence
+        learning_or_residence = ""
+        if record["language"]["learning"]:
+            learning_or_residence = record["language"]["learning"]
+        else:
+            learning_or_residence = record["speaker"].residence
         loccode = ""
         if learning_or_residence:
+
             sparql = Sparql(SPARQL_ENDPOINT)
 
             self.location_map = {}
@@ -207,7 +212,14 @@ class OcWiktionary(Wiktionary):
                 if loccode != "":
                     loccode = loccode + " : "
 
-        codefichier = f"{loccode}escotar « {record.transcription} » [[Fichièr:{record.file}]]"
+        codefichier = (
+                loccode
+                + "escotar « "
+                + record["transcription"]
+                + " » [[Fichièr:"
+                + record["file"]
+                + "]]"
+        )
 
         wikicode = re.sub(
             r"{="
@@ -222,20 +234,24 @@ class OcWiktionary(Wiktionary):
             result = self.do_edit(transcription, wtp.parse(wikicode), basetimestamp)
         except Exception as e:
             # If we got an editconflict, just restart from the beginning
-            if "editconflict" in str(e):
+            if str(e).find("editconflict") > -1:
                 self.execute(record)
             else:
                 raise e
 
         if result:
             print(
-                record.id
+                record["id"]
                 + ": added to ocwiktionary - https://oc.wiktionary.org/wiki/"
                 + transcription
             )
 
         return result
 
-    @staticmethod
-    def __normalize(transcription):
+    """
+    Private methods
+    """
+
+    # Normalize the transcription to fit ocwiktionary's title conventions
+    def normalize(self, transcription):
         return transcription.replace("'", "’")

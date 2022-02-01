@@ -19,7 +19,11 @@ class Pywiki:
         self.dry_run = False
         self.api_endpoint = api_endpoint
         self.assertion = assertion
-        self.limit = 5000 if self.assertion == "bot" else 500
+        if self.assertion == "bot":
+            self.limit = 5000
+        else:
+            self.limit = 500
+
         self.session = requests.Session()
         self.session.headers.update(
             {'User-Agent': 'Lingua Libre Bot/' + __version__ + ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})

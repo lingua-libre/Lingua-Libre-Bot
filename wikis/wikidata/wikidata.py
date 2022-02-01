@@ -6,9 +6,7 @@
 
 import re
 import uuid
-from typing import List
 
-from record import Record
 from wikis.wikifamily import WikiFamily
 
 PRONUNCIATION_PROPERTY = "P443"
@@ -20,7 +18,7 @@ BRACKET_REGEX = re.compile(r" \([^(]+\)$")
 
 class Wikidata(WikiFamily):
 
-    def __init__(self, user: str, password: str):
+    def __init__(self, user, password):
         """
         Constructor.
 
@@ -37,88 +35,91 @@ class Wikidata(WikiFamily):
     Public methods
     """
 
-    def prepare(self, records: List[Record]) -> List[Record]:
+    def prepare(self, records):
+        # Resolve all redirects
+        qids = []
         redirects = {}
-        qids = [
-            record.links["wikidata"]
-            for record in records
-            if record.links["wikidata"] is not None
-        ]
-
-        while qids:
+        for record in records:
+            if record["links"]["wikidata"] is not None:
+                qids += [record["links"]["wikidata"]]
+        while len(qids) > 0:
             redirects = {
                 **redirects,
-                **self.__resolve_redirects(qids[:50])
+                **self.resolve_redirects(qids[:50])
             }
             qids = qids[50:]
         for record in records:
-            if record.links["wikidata"] is not None:
-                qid = record.links["wikidata"]
+            if record["links"]["wikidata"] is not None:
+                qid = record["links"]["wikidata"]
                 if qid in redirects:
-                    record.links["wikidata"] = redirects[qid]
+                    record["links"]["wikidata"] = redirects[qid]
 
         # If a record is linked to an article on Wikipedia but has no linked QID
         # we try to get it through sitelinks
         links = {}
         for record in records:
             if (
-                    record.links["wikidata"] is None
-                    and record.links["wikipedia"] is not None
+                    record["links"]["wikidata"] is None
+                    and record["links"]["wikipedia"] is not None
             ):
-                (lang, title) = record.links["wikipedia"].split(":", 1)
+                (lang, title) = record["links"]["wikipedia"].split(":", 1)
                 if lang not in links:
                     links[lang] = []
                 links[lang] += [title]
 
         connections = {}
-        for lang, link in links.items():
-            while len(link) > 0:
+        for lang in links:
+            while len(links[lang]) > 0:
                 connections = {
                     **connections,
-                    **self.__get_ids_from_titles(lang + "wiki", link[:50], lang),
+                    **self.get_ids_from_titles(lang + "wiki", links[lang][:50], lang),
                 }
-                links[lang] = link[50:]
+                links[lang] = links[lang][50:]
 
         for record in records:
             if (
-                    record.links["wikidata"] is None
-                    and record.links["wikipedia"] is not None
-                    and record.links["wikipedia"] in connections
+                    record["links"]["wikidata"] is None
+                    and record["links"]["wikipedia"] is not None
             ):
-                record.links["wikidata"] = connections[
-                    record.links["wikipedia"]
-                ]
+                if record["links"]["wikipedia"] in connections:
+                    record["links"]["wikidata"] = connections[
+                        record["links"]["wikipedia"]
+                    ]
 
         return records
 
     # Try to use the given record on Wikidata
-    def execute(self, record: Record) -> bool:
-        if record.links["wikidata"] is None:
+    def execute(self, record):
+        if record["links"]["wikidata"] is None:
             return False
 
-        if self.__is_already_present(record.links["wikidata"], record.file):
-            print(record.id + ": already on Wikidata")
+        if self.is_already_present(record["links"]["wikidata"], record["file"]):
+            print(record["id"] + ": already on Wikidata")
             return False
 
-        result = self.__do_edit(
-            record.links["wikidata"],
-            record.file,
-            record.language["qid"],
-            record.id,
+        result = self.do_edit(
+            record["links"]["wikidata"],
+            record["file"],
+            record["language"]["qid"],
+            record["id"],
         )
-        if result:
+        if result is True:
             print(
-                record.id
+                record["id"]
                 + ": added to Wikidata - https://www.wikidata.org/wiki/"
-                + record.links["wikidata"]
+                + record["links"]["wikidata"]
                 + "#"
                 + PRONUNCIATION_PROPERTY
             )
 
         return result
 
+    """
+    Private methods
+    """
+
     # Find out if the given items are redirects or not
-    def __resolve_redirects(self, qids):
+    def resolve_redirects(self, qids):
         response = self.api.request(
             {
                 "action": "wbgetentities",
@@ -138,7 +139,7 @@ class Wikidata(WikiFamily):
 
     # Try to find the corresponding Wikidata ids of titles (50 max), given
     # the wiki they belong and their language code
-    def __get_ids_from_titles(self, dbname, titles, lang):
+    def get_ids_from_titles(self, dbname, titles, lang):
         response = self.api.request(
             {
                 "action": "wbgetentities",
@@ -181,13 +182,9 @@ class Wikidata(WikiFamily):
 
         return connections
 
-    def __is_already_present(self, entity_id, filename):
-        """
-        Check whether the given record is already present in a claim of the given item.
-        @param entity_id:
-        @param filename:
-        @return:
-        """
+        # Check whether the given record is already present in a claim of the given item
+
+    def is_already_present(self, entity_id, filename):
         response = self.api.request(
             {
                 "action": "wbgetclaims",
@@ -203,15 +200,9 @@ class Wikidata(WikiFamily):
                     return True
         return False
 
-    def __do_edit(self, entity_id, filename, language, lingualibre_id):
-        """
-        Add the given record in a new claim of the given item.
-        @param entity_id:
-        @param filename:
-        @param language:
-        @param lingualibre_id:
-        @return:
-        """
+        # Add the given record in a new claim of the given item
+
+    def do_edit(self, entity_id, filename, language, lingualibre_id):
         response = self.api.request(
             {
                 "action": "wbsetclaim",

@@ -1,11 +1,9 @@
 import datetime
 import json
 import time
-from typing import List
 
 import requests
 
-from record import Record
 from sparql import Sparql
 from speaker import Speaker
 
@@ -53,7 +51,7 @@ WHERE {
 }"""
 
 
-def get_records(query) -> List[Record]:
+def get_records(query):
     sparql = Sparql(ENDPOINT)
     print("Requesting data")
     raw_records = sparql.request(query)
@@ -68,27 +66,30 @@ def get_records(query) -> List[Record]:
                                            gender=sparql.format_value(record, "gender"),
                                            residence=sparql.format_value(record, "residence"))
         speaker = speakers[speaker_id]
-        record = Record(id=sparql.format_value(record, "record"),
-                        file=sparql.format_value(record, "file"),
-                        date=sparql.format_value(record, "date"),
-                        transcription=sparql.format_value(record, "transcription"),
-                        qualifier=sparql.format_value(record, "qualifier"),
-                        user=sparql.format_value(record, "linkeduser"),
-                        speaker=speaker,
-                        links={
-                            "wikidata": sparql.format_value(record, "wikidataId"),
-                            "lexeme": sparql.format_value(record, "lexemeId"),
-                            "wikipedia": sparql.format_value(record, "wikipediaTitle"),
-                            "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
-                        },
-                        language={
-                            "iso": sparql.format_value(record, "languageIso"),
-                            "qid": sparql.format_value(record, "languageQid"),
-                            "wm": sparql.format_value(record, "languageWMCode"),
-                            "learning": sparql.format_value(record, "learningPlace"),
-                            "level": sparql.format_value(record, "languageLevel"),
-                        })
-        records.append(record)
+        records += [
+            {
+                "id": sparql.format_value(record, "record"),
+                "file": sparql.format_value(record, "file"),
+                "date": sparql.format_value(record, "date"),
+                "transcription": sparql.format_value(record, "transcription"),
+                "qualifier": sparql.format_value(record, "qualifier"),
+                "user": sparql.format_value(record, "linkeduser"),
+                "speaker": speaker,
+                "links": {
+                    "wikidata": sparql.format_value(record, "wikidataId"),
+                    "lexeme": sparql.format_value(record, "lexemeId"),
+                    "wikipedia": sparql.format_value(record, "wikipediaTitle"),
+                    "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
+                },
+                "language": {
+                    "iso": sparql.format_value(record, "languageIso"),
+                    "qid": sparql.format_value(record, "languageQid"),
+                    "wm": sparql.format_value(record, "languageWMCode"),
+                    "learning": sparql.format_value(record, "learningPlace"),
+                    "level": sparql.format_value(record, "languageLevel"),
+                },
+            }
+        ]
     print(f"Found {len(records)} records.")
     return records
 
@@ -170,11 +171,14 @@ def simple_mode(args, supported_wikis):
     for dbname in supported_wikis:
         records = supported_wikis[dbname].prepare(records)
 
+    # Try to reuse each listed records on each supported wikis
+    counter = 0
     total = len(records)
-    for counter, record in enumerate(records, start=1):
+    for record in records:
         for dbname in supported_wikis:
             if supported_wikis[dbname].execute(record):
                 time.sleep(1)
+        counter += 1
         if counter % 10 == 0:
             print(f"[{counter}/{total}]")
     # TODO: better handling of the KeyboardInterrupt
