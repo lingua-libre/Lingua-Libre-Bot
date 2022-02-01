@@ -169,7 +169,7 @@ class Wikidata(WikiFamily):
                             BRACKET_REGEX.sub("", title).lower()
                             == BRACKET_REGEX.sub("", label).lower()
                     ):
-                        connections[f"{lang}:{title}"] = qid
+                        connections[lang + ":" + title] = qid
                     else:
                         print(
                             "Title and label diverge: "
