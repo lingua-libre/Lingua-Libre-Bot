@@ -1,41 +1,18 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Antoine "0x010C" Lamielle
-# Date: 9 June 2018
 # License: GNU GPL v2+
 
 import re
-import uuid
 from typing import List
 
 from record import Record
-from wikis.wikifamily import WikiFamily
+from wikis.wikidata.abstract_wikidata import AbstractWikidata, PRONUNCIATION_PROPERTY
 
-PRONUNCIATION_PROPERTY = "P443"
 LANG_PROPERTY = "P407"
-REFURL_PROPERTY = "P854"
-SUMMARY = "Add an audio pronunciation file from Lingua Libre"
 BRACKET_REGEX = re.compile(r" \([^(]+\)$")
 
 
-class Wikidata(WikiFamily):
-
-    def __init__(self, user: str, password: str):
-        """
-        Constructor.
-
-        Parameters
-        ----------
-        user
-            Username to login to the wiki.
-        password
-            Password to log into the account.
-        """
-        super().__init__(user, password, "wikidata", "www")
-
-    """
-    Public methods
-    """
+class Wikidata(AbstractWikidata):
 
     def prepare(self, records: List[Record]) -> List[Record]:
         redirects = {}
@@ -61,23 +38,20 @@ class Wikidata(WikiFamily):
         # we try to get it through sitelinks
         links = {}
         for record in records:
-            if (
-                    record.links["wikidata"] is None
-                    and record.links["wikipedia"] is not None
-            ):
+            if record.links["wikidata"] is None and record.links["wikipedia"] is not None:
                 (lang, title) = record.links["wikipedia"].split(":", 1)
                 if lang not in links:
                     links[lang] = []
                 links[lang] += [title]
 
         connections = {}
-        for lang, link in links.items():
-            while len(link) > 0:
+        for lang in links:
+            while len(links[lang]) > 0:
                 connections = {
                     **connections,
-                    **self.__get_ids_from_titles(lang + "wiki", link[:50], lang),
+                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:50], lang),
                 }
-                links[lang] = link[50:]
+                links[lang] = links[lang][50:]
 
         for record in records:
             if (
@@ -85,37 +59,24 @@ class Wikidata(WikiFamily):
                     and record.links["wikipedia"] is not None
                     and record.links["wikipedia"] in connections
             ):
-                record.links["wikidata"] = connections[
-                    record.links["wikipedia"]
-                ]
+                record.links["wikidata"] = connections[record.links["wikipedia"]]
 
         return records
 
     # Try to use the given record on Wikidata
     def execute(self, record: Record) -> bool:
-        if record.links["wikidata"] is None:
+        wd_link = record.links["wikidata"]
+        if wd_link is None:
             return False
 
-        if self.__is_already_present(record.links["wikidata"], record.file):
+        if super().is_already_present(wd_link, record.file):
             print(record.id + ": already on Wikidata")
             return False
 
-        result = self.__do_edit(
-            record.links["wikidata"],
-            record.file,
-            record.language["qid"],
-            record.id,
-        )
+        result = self.do_edit(wd_link, record.file, record.language["qid"], record.id, )
         if result:
-            print(
-                record.id
-                + ": added to Wikidata - https://www.wikidata.org/wiki/"
-                + record.links["wikidata"]
-                + "#"
-                + PRONUNCIATION_PROPERTY
-            )
-
-        return result
+            print(f"{record.id}: added to Wikidata - https://www.wikidata.org/wiki/{wd_link}#{PRONUNCIATION_PROPERTY}")
+            return result
 
     # Find out if the given items are redirects or not
     def __resolve_redirects(self, qids):
@@ -128,13 +89,15 @@ class Wikidata(WikiFamily):
             }
         )
 
-        redirects = {}
-        if "entities" in response:
-            for qid in response["entities"]:
-                if "redirects" in response["entities"][qid]:
-                    redirects[qid] = response["entities"][qid]["redirects"]["to"]
+        if "entities" not in response:
+            return {}
 
-        return redirects
+        entities = response["entities"]
+        return {
+            qid: entities[qid]["redirects"]["to"]
+            for qid in entities
+            if "redirects" in entities[qid]
+        }
 
     # Try to find the corresponding Wikidata ids of titles (50 max), given
     # the wiki they belong and their language code
@@ -151,100 +114,40 @@ class Wikidata(WikiFamily):
             }
         )
 
+        if "entities" not in response:
+            return {}
+
         # Extract and verify each item found
         connections = {}
-        if "entities" in response:
-            for qid in response["entities"]:
-                if (
-                        "labels" in response["entities"][qid]
-                        and lang in response["entities"][qid]["labels"]
-                ):
-                    title = response["entities"][qid]["sitelinks"][dbname]["title"]
-                    label = response["entities"][qid]["labels"][lang]["value"]
 
-                    # Only make a connections if the WP title is equal to
-                    # the label on Wikidata
-                    if (
-                            BRACKET_REGEX.sub("", title).lower()
-                            == BRACKET_REGEX.sub("", label).lower()
-                    ):
-                        connections[f"{lang}:{title}"] = qid
-                    else:
-                        print(
-                            "Title and label diverge: "
-                            + qid
-                            + " - "
-                            + BRACKET_REGEX.sub("", title).lower()
-                            + " - "
-                            + label.lower()
-                        )
+        entities = response["entities"]
+        for qid in entities:
+            entity_qid = entities[qid]
+            if "labels" not in entity_qid or lang not in entity_qid["labels"]:
+                continue
+
+            title = entity_qid["sitelinks"][dbname]["title"]
+            label = entity_qid["labels"][lang]["value"]
+
+            # Only make a connections if the WP title is equal to
+            # the label on Wikidata
+            formated_title = self.format_title(title)
+            if formated_title == self.format_title(label):
+                connections[f"{lang}:{title}"] = qid
+            else:
+                print(f"Title and label diverge: {qid} - {formated_title} - {label.lower()}")
 
         return connections
 
-    def __is_already_present(self, entity_id, filename):
-        """
-        Check whether the given record is already present in a claim of the given item.
-        @param entity_id:
-        @param filename:
-        @return:
-        """
-        response = self.api.request(
-            {
-                "action": "wbgetclaims",
-                "format": "json",
-                "entity": entity_id,
-                "property": PRONUNCIATION_PROPERTY,
-            }
-        )
+    @staticmethod
+    def format_title(title: str) -> str:
+        return BRACKET_REGEX.sub("", title).lower()
 
-        if PRONUNCIATION_PROPERTY in response["claims"]:
-            for claim in response["claims"][PRONUNCIATION_PROPERTY]:
-                if claim["mainsnak"]["datavalue"]["value"] == filename:
-                    return True
-        return False
-
-    def __do_edit(self, entity_id, filename, language, lingualibre_id):
-        """
-        Add the given record in a new claim of the given item.
-        @param entity_id:
-        @param filename:
-        @param language:
-        @param lingualibre_id:
-        @return:
-        """
-        response = self.api.request(
-            {
-                "action": "wbsetclaim",
-                "format": "json",
-                "claim": '{"type":"statement","mainsnak":{"snaktype":"value","property":"'
-                         + PRONUNCIATION_PROPERTY
-                         + '","datavalue":{"type":"string","value":"'
-                         + filename
-                         + '"}},"id":"'
-                         + entity_id
-                         + "$"
-                         + str(uuid.uuid4())
-                         + '","qualifiers":{"'
-                         + LANG_PROPERTY
-                         + '":[{"snaktype":"value","property":"'
-                         + LANG_PROPERTY
-                         + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
-                         + language
-                         + '"}}}]},"references":[{"snaks":{"'
-                         + REFURL_PROPERTY
-                         + '":[{"snaktype":"value","property":"'
-                         + REFURL_PROPERTY
-                         + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
-                         + lingualibre_id
-                         + '"}}]}}],"rank":"normal"}',
-                "summary": SUMMARY,
-                "token": self.api.get_csrf_token(),
-                "bot": 1,
-            }
-        )
-
-        if "success" in response:
-            return True
-
-        print(response)
-        return False
+    def do_edit(self, entity_id: str, filename: str, language: str, lingualibre_id: str) -> bool:
+        return super().do_edit(entity_id, filename, lingualibre_id, '"'
+                               + LANG_PROPERTY
+                               + '":[{"snaktype":"value","property":"'
+                               + LANG_PROPERTY
+                               + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
+                               + language
+                               + '"}}}]')
