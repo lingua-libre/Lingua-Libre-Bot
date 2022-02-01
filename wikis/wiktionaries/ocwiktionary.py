@@ -219,7 +219,7 @@ class OcWiktionary(Wiktionary):
 
         # Save the result
         try:
-            result = self.__do_edit(transcription, wtp.parse(wikicode), basetimestamp)
+            result = self.do_edit(transcription, wtp.parse(wikicode), basetimestamp)
         except Exception as e:
             # If we got an editconflict, just restart from the beginning
             if "editconflict" in str(e):

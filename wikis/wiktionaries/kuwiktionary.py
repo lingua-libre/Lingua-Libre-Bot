@@ -132,6 +132,7 @@ class KuWiktionary(Wiktionary):
         # Choose the location to be displayed with the following order
         # 1) place of learning
         # 2) place of residence
+        location = ""
         location = record.language["learning"] or record.speaker.residence
         # Add the pronunciation file to the pronunciation subsection
         self.__append_file(
@@ -143,7 +144,7 @@ class KuWiktionary(Wiktionary):
 
         # Save the result
         try:
-            result = self.__do_edit(transcription, wikicode, basetimestamp)
+            result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
             # If we got an editconflict, just restart from the beginning
             if "editconflict" in str(e):
@@ -252,10 +253,14 @@ class KuWiktionary(Wiktionary):
         wikicode.sections[1].contents = str(section_content)
 
         # Remove the ugly hack, see comment line 17
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("$1\n", "")
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
+            "$1\n", ""
+        )
 
         # Remove unneeded blank lines
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("\n\n", "")
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
+            "\n\n", ""
+        )
 
     # Append a string to a wikitext string, just after the language section
     # (before any section)
