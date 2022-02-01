@@ -55,17 +55,11 @@ def get_records(query):
     raw_records = sparql.request(query)
     print("Request done")
     records = []
-    speakers = {}
     for record in raw_records:
-        speaker_id = sparql.format_value(record, "speaker")
-        if speaker_id in speakers:
-            speaker = speakers[speaker_id]
-        else:
-            speaker = Speaker(id=speaker_id,
-                              name=sparql.format_value(record, "speakerLabel"),
-                              gender=sparql.format_value(record, "gender"),
-                              residence=sparql.format_value(record, "residence"))
-            speakers[speaker_id] = speaker
+        speaker = Speaker(id=sparql.format_value(record, "speaker"),
+                          name=sparql.format_value(record, "speakerLabel"),
+                          gender=sparql.format_value(record, "gender"),
+                          residence=sparql.format_value(record, "residence"))
         records += [
             {
                 "id": sparql.format_value(record, "record"),
