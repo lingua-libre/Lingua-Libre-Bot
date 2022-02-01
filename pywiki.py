@@ -25,8 +25,7 @@ class Pywiki:
             self.limit = 500
 
         self.session = requests.Session()
-        self.session.headers.update(
-            {'User-Agent': 'Lingua Libre Bot/' + __version__ + ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})
+        self.session.headers.update({'User-Agent': 'Lingua Libre Bot/' + __version__ +  ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})
 
     def set_dry_run(self, dry_run):
         self.dry_run = dry_run
@@ -35,9 +34,7 @@ class Pywiki:
     Perform a given request with a simple but usefull error managment
     """
 
-    @backoff.on_exception(backoff.expo, (
-    requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError,
-    json.decoder.JSONDecodeError), max_tries=8)
+    @backoff.on_exception(backoff.expo, (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError, json.decoder.JSONDecodeError), max_tries=8)
     def request(self, data, files=None):
         if self.dry_run == True and data["action"] != "query":
             print(data)
@@ -97,7 +94,6 @@ class Pywiki:
     """
     Get a crsf token from frwiki to be able to edit a page
     """
-
     def get_csrf_token(self):
         r = self.request(
             {

@@ -45,7 +45,6 @@ BOTTOM_REGEX = re.compile(
     re.IGNORECASE,
 )
 
-
 class ShyWiktionary(Wiktionary):
 
     def __init__(self, user, password):
@@ -154,7 +153,7 @@ class ShyWiktionary(Wiktionary):
         )
 
         # Save the result
-        # print(f"Mot: {transcription}\n{wikicode}")
+        #print(f"Mot: {transcription}\n{wikicode}")
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:

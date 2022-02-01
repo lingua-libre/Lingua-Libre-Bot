@@ -184,12 +184,12 @@ class Wikidata(WikiFamily):
 
         # Check whether the given record is already present in a claim of the given item
 
-    def is_already_present(self, entity_id, filename):
+    def is_already_present(self, entityId, filename):
         response = self.api.request(
             {
                 "action": "wbgetclaims",
                 "format": "json",
-                "entity": entity_id,
+                "entity": entityId,
                 "property": PRONUNCIATION_PROPERTY,
             }
         )
@@ -202,7 +202,7 @@ class Wikidata(WikiFamily):
 
         # Add the given record in a new claim of the given item
 
-    def do_edit(self, entity_id, filename, language, lingualibre_id):
+    def do_edit(self, entityId, filename, language, lingualibreId):
         response = self.api.request(
             {
                 "action": "wbsetclaim",
@@ -212,7 +212,7 @@ class Wikidata(WikiFamily):
                          + '","datavalue":{"type":"string","value":"'
                          + filename
                          + '"}},"id":"'
-                         + entity_id
+                         + entityId
                          + "$"
                          + str(uuid.uuid4())
                          + '","qualifiers":{"'
@@ -226,7 +226,7 @@ class Wikidata(WikiFamily):
                          + '":[{"snaktype":"value","property":"'
                          + REFURL_PROPERTY
                          + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
-                         + lingualibre_id
+                         + lingualibreId
                          + '"}}]}}],"rank":"normal"}',
                 "summary": SUMMARY,
                 "token": self.api.get_csrf_token(),

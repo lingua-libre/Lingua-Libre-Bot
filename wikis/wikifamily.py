@@ -5,6 +5,7 @@
 # License: GNU GPL v2+
 
 import abc
+from typing import List, Any
 
 import pywiki
 
@@ -62,3 +63,4 @@ class WikiFamily(abc.ABC):
         Add the records to the pages.
         @param record: the list of records to add
         """
+
