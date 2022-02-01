@@ -1,7 +1,9 @@
-import time
 import datetime
-import requests
 import json
+import time
+
+import requests
+
 from sparql import Sparql
 from speaker import Speaker
 
@@ -60,9 +62,9 @@ def get_records(query):
         speaker_id = sparql.format_value(record, "speaker")
         if speaker_id not in speakers:
             speakers[speaker_id] = Speaker(id=speaker_id,
-                              name=sparql.format_value(record, "speakerLabel"),
-                              gender=sparql.format_value(record, "gender"),
-                              residence=sparql.format_value(record, "residence"))
+                                           name=sparql.format_value(record, "speakerLabel"),
+                                           gender=sparql.format_value(record, "gender"),
+                                           residence=sparql.format_value(record, "residence"))
         speaker = speakers[speaker_id]
         records += [
             {
@@ -95,8 +97,8 @@ def get_records(query):
 def live_mode(args, supported_wikis):
     delay = args.delay
     prev_timestamp = (
-        datetime.datetime.utcnow() - datetime.timedelta(seconds=args.backcheck)
-    ).replace(microsecond=0).isoformat() + "Z"
+                             datetime.datetime.utcnow() - datetime.timedelta(seconds=args.backcheck)
+                     ).replace(microsecond=0).isoformat() + "Z"
     prev_items = set()
     items = set()
     while True:
@@ -146,7 +148,7 @@ def simple_mode(args, supported_wikis):
     filters = ""
     if args.item is not None:
         filters = (
-            "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
+                "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
         )
     else:
         if args.startdate is not None:
@@ -180,6 +182,7 @@ def simple_mode(args, supported_wikis):
         if counter % 10 == 0:
             print(f"[{counter}/{total}]")
     # TODO: better handling of the KeyboardInterrupt
-    # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin, nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
+    # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin,
+    #  nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
 
     return [record["id"] for record in records]

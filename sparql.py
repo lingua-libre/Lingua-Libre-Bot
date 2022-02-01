@@ -86,10 +86,10 @@ class Sparql:
         at java.util.concurrent.FutureTask.get(FutureTask.java:206)
         ...
         '''
-        exceptionName = "MalformedQueryException"
-        if response.text.find(exceptionName + ":") != -1:
+        exception_name = "MalformedQueryException"
+        if response.text.find(exception_name + ":") != -1:
             error = response.text
-            pos1 = response.text.find(exceptionName) + len(exceptionName) + 1
+            pos1 = response.text.find(exception_name) + len(exception_name) + 1
             pos2 = response.text.find("\n", pos1)
             error = error[pos1:pos2].strip()
             print(f"MalformedQueryException: {error}")
@@ -102,10 +102,10 @@ class Sparql:
         at com.bigdata.rdf.sail.webapp.QueryServlet.doSparqlQuery(QueryServlet.java:678)
         ...
         '''
-        exceptionName = "TimeoutException"
-        if response.text.find(exceptionName) != -1:
+        exception_name = "TimeoutException"
+        if response.text.find(exception_name) != -1:
             error = response.text
-            pos1 = response.text.find("java.util.concurrent." + exceptionName)
+            pos1 = response.text.find("java.util.concurrent." + exception_name)
             pos2 = response.text.find("\n", pos1)
             error = error[pos1:pos2].strip()
             print(f"TimeoutException: {error}")

@@ -106,7 +106,7 @@ class OcWiktionary(Wiktionary):
             self.location_map[sparql.format_value(line, "location")] = country
             if country != location:
                 self.location_map[sparql.format_value(line, "location")] += (
-                    " (" + location + ")"
+                        " (" + location + ")"
                 )
 
         return records
@@ -165,7 +165,7 @@ class OcWiktionary(Wiktionary):
         motif = re.search(
             r"{{="
             + str(lang)
-            + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|$)",
+            + r"=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|$)",
             str(wikicode),
         )
 
@@ -173,11 +173,10 @@ class OcWiktionary(Wiktionary):
             wikicode = re.sub(
                 r"{{="
                 + str(lang)
-                + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|{{-sil-}}|{{-([^\-]*?)-\|([a-z]+)}}|$)",
-                "{{=" + lang + "=}}\g<1>{{-pron-}}\g<3>",
+                + r"=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|{{-sil-}}|{{-([^\-]*?)-\|([a-z]+)}}|$)",
+                "{{=" + lang + r"=}}\g<1>{{-pron-}}\g<3>",
                 str(wikicode),
             )
-
 
         learning_or_residence = ""
         if record["language"]["learning"]:
@@ -214,19 +213,19 @@ class OcWiktionary(Wiktionary):
                     loccode = loccode + " : "
 
         codefichier = (
-            loccode
-            + "escotar « "
-            + record["transcription"]
-            + " » [[Fichièr:"
-            + record["file"]
-            + "]]"
+                loccode
+                + "escotar « "
+                + record["transcription"]
+                + " » [[Fichièr:"
+                + record["file"]
+                + "]]"
         )
 
         wikicode = re.sub(
             r"{="
             + str(lang)
             + r"=}(([^{]|{[^=])*?){{-pron-}}(([^{]|{[^{]|{{[^\-])*?)({{-|{{=|$)",
-            "{=" + lang + "=}\g<1>{{-pron-}}\g<3>" + codefichier + "\n\g<5>",
+            "{=" + lang + r"=}\g<1>{{-pron-}}\g<3>" + codefichier + r"\n\g<5>",
             str(wikicode),
         )
 

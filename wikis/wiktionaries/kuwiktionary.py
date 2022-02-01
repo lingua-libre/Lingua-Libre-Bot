@@ -4,12 +4,13 @@
 # Date: 28 September 2021
 # License: GNU GPL v2+
 
-#NOTE:
-#python3 llbot.py --wiki kuwiktionary --dryrun simple --langwm ku --item Q379244
-#page pour tester l'ajout de section « pron »: porbirr (Q372968)
-#page contenant déjà une section « pron » : gûz (Q379244)
+# NOTE:
+# python3 llbot.py --wiki kuwiktionary --dryrun simple --langwm ku --item Q379244
+# page pour tester l'ajout de section « pron »: porbirr (Q372968)
+# page contenant déjà une section « pron » : gûz (Q379244)
 
 import re
+
 import wikitextparser as wtp
 
 from sparql import Sparql
@@ -98,7 +99,7 @@ class KuWiktionary(Wiktionary):
     # Try to use the given record on the Kurdish Wiktionary
     def execute(self, record):
         transcription = record["transcription"]
-        
+
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
             transcription, record["file"]
@@ -209,7 +210,7 @@ class KuWiktionary(Wiktionary):
         for section in wikicode.sections:
             if section.title is None:
                 continue
-            
+
             # Search for the language section
             if re.search(r'{{ziman\|[a-z]+}}', section.title.replace(" ", "")):
                 break
@@ -221,14 +222,14 @@ class KuWiktionary(Wiktionary):
         section_content = wtp.parse(wikicode.sections[1].contents)
         new_section = EMPTY_PRONUNCIATION_SECTION
         if len(section_content.sections) < 2:
-            new_section = new_section.replace("=== Bilêvkirin","\n=== Bilêvkirin")
-            
+            new_section = new_section.replace("=== Bilêvkirin", "\n=== Bilêvkirin")
+
         # Append an empty pronunciation section just after the language section
         pattern = r"==="
         lang_section.contents = self.safe_append_text(
             lang_section.contents, new_section, pattern
         )
-        
+
         return self.get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
@@ -236,12 +237,12 @@ class KuWiktionary(Wiktionary):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
-        if (language_qid == "Q36368" and # Kurdish language on Wikidata
-            location_qid in self.location_map):
+        if (language_qid == "Q36368" and  # Kurdish language on Wikidata
+                location_qid in self.location_map):
             location = self.location_map[location_qid]
 
         if (language_qid != "Q36368" and
-            location_qid in self.location_map_with_country):
+                location_qid in self.location_map_with_country):
             location = self.location_map_with_country[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
@@ -258,12 +259,12 @@ class KuWiktionary(Wiktionary):
         )
 
         wikicode.sections[1].contents = str(section_content)
-        
+
         # Remove the ugly hack, see comment line 17
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
         )
-        
+
         # Remove unneeded blank lines
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "\n\n", ""

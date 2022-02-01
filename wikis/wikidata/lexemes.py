@@ -55,12 +55,12 @@ class Lexemes(WikiFamily):
 
         return result
 
-    def __is_already_present(self, entityId, filename):
+    def __is_already_present(self, entity_id, filename):
         response = self.api.request(
             {
                 "action": "wbgetclaims",
                 "format": "json",
-                "entity": entityId,
+                "entity": entity_id,
                 "property": PRONUNCIATION_PROPERTY,
             }
         )
@@ -73,26 +73,26 @@ class Lexemes(WikiFamily):
 
         # Add the given record in a new claim of the given item
 
-    def __do_edit(self, entityId, filename, lingualibreId):
+    def __do_edit(self, entity_id, filename, lingualibre_id):
         response = self.api.request(
             {
                 "action": "wbsetclaim",
                 "format": "json",
                 "claim": '{"type":"statement","mainsnak":{"snaktype":"value","property":"'
-                + PRONUNCIATION_PROPERTY
-                + '","datavalue":{"type":"string","value":"'
-                + filename
-                + '"}},"id":"'
-                + entityId
-                + "$"
-                + str(uuid.uuid4())
-                + '","qualifiers":{},"references":[{"snaks":{"'
-                + REFURL_PROPERTY
-                + '":[{"snaktype":"value","property":"'
-                + REFURL_PROPERTY
-                + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
-                + lingualibreId
-                + '"}}]}}],"rank":"normal"}',
+                         + PRONUNCIATION_PROPERTY
+                         + '","datavalue":{"type":"string","value":"'
+                         + filename
+                         + '"}},"id":"'
+                         + entity_id
+                         + "$"
+                         + str(uuid.uuid4())
+                         + '","qualifiers":{},"references":[{"snaks":{"'
+                         + REFURL_PROPERTY
+                         + '":[{"snaktype":"value","property":"'
+                         + REFURL_PROPERTY
+                         + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
+                         + lingualibre_id
+                         + '"}}]}}],"rank":"normal"}',
                 "summary": SUMMARY,
                 "token": self.api.get_csrf_token(),
                 "bot": 1,
