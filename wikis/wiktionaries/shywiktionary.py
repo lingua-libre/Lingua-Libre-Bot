@@ -41,7 +41,7 @@ WHERE {
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Taggayt):[^\]]+\]\])?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Taggayt):[^]]+]])?)*$",
     re.IGNORECASE,
 )
 
