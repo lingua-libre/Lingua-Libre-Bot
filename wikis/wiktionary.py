@@ -71,7 +71,7 @@ class Wiktionary(WikiFamily, abc.ABC):
         return is_already_present, wtp.parse(wikicode), basetimestamp
 
     # Edit the page
-    def do_edit(self, page_name: str, wikicode, basetimestamp) -> bool:
+    def __do_edit(self, page_name: str, wikicode, basetimestamp) -> bool:
         result = self.api.request(
             {
                 "action": "edit",
@@ -88,3 +88,7 @@ class Wiktionary(WikiFamily, abc.ABC):
         )
 
         return "edit" in result
+
+    @staticmethod
+    def __normalize(transcription):
+        return transcription.replace("'", "’")

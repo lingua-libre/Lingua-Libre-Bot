@@ -235,7 +235,3 @@ class OcWiktionary(Wiktionary):
             )
 
         return result
-
-    @staticmethod
-    def __normalize(transcription):
-        return transcription.replace("'", "’")
