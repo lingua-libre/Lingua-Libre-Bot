@@ -211,7 +211,7 @@ class KuWiktionary(Wiktionary):
                 continue
             
             # Search for the language section
-            if re.search(r'\{\{ziman\|[a-z]+\}\}', section.title.replace(" ", "")):
+            if re.search(r'{{ziman\|[a-z]+}}', section.title.replace(" ", "")):
                 break
 
         lang_section = section
