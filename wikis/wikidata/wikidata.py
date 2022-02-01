@@ -69,11 +69,11 @@ class Wikidata(AbstractWikidata):
         if wd_link is None:
             return False
 
-        if self.__is_already_present(wd_link, record.file):
+        if super().is_already_present(wd_link, record.file):
             print(record.id + ": already on Wikidata")
             return False
 
-        result = self.__do_edit(wd_link, record.file, record.language["qid"], record.id, )
+        result = self.do_edit(wd_link, record.file, record.language["qid"], record.id, )
         if result:
             print(f"{record.id}: added to Wikidata - https://www.wikidata.org/wiki/{wd_link}#{PRONUNCIATION_PROPERTY}")
             return result
@@ -143,7 +143,7 @@ class Wikidata(AbstractWikidata):
     def format_title(title: str) -> str:
         return BRACKET_REGEX.sub("", title).lower()
 
-    def __do_edit(self, entity_id: str, filename: str, language: str, lingualibre_id: str) -> bool:
+    def do_edit(self, entity_id: str, filename: str, language: str, lingualibre_id: str) -> bool:
         return super().do_edit(entity_id, filename, lingualibre_id, '"'
                                + LANG_PROPERTY
                                + '":[{"snaktype":"value","property":"'

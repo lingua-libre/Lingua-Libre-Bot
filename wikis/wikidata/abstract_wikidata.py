@@ -14,7 +14,7 @@ class AbstractWikidata(WikiFamily, ABC):
     def __init__(self, user: str, password: str):
         super().__init__(user, password, "wikidata", "www")
 
-    def __is_already_present(self, entity_id, filename):
+    def is_already_present(self, entity_id, filename):
         """
         Check whether the given record is already present in a claim of the given item.
         @param entity_id:

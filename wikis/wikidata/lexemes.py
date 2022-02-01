@@ -18,7 +18,7 @@ class Lexemes(AbstractWikidata):
         if not re.match(r"^L\d+-F\d+$", lexeme_link):
             print(f"{lexeme_link} is not a valid lexeme form id")
 
-        if self.__is_already_present(lexeme_link, record.file):
+        if super().is_already_present(lexeme_link, record.file):
             print(f"{record.id}: already on Wikidata")
             return False
 
@@ -32,5 +32,5 @@ class Lexemes(AbstractWikidata):
 
         return result
 
-    def __do_edit(self, entity_id: str, filename: str, lingualibre_id: str) -> bool:
+    def do_edit(self, entity_id: str, filename: str, lingualibre_id: str) -> bool:
         return super().do_edit(entity_id, filename, lingualibre_id, "")
