@@ -30,6 +30,14 @@ class Lexemes(WikiFamily):
         """
         super().__init__(user, password, "wikidata", "www")
 
+    """
+    Public methods
+    """
+    # Prepare all the records for their use on Wikidata
+    # Currently not needed
+    def prepare(self, records):
+        return records
+
     def execute(self, record):
         if record["links"]["lexeme"] is None:
             return False
