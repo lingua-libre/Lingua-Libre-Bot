@@ -164,7 +164,7 @@ class FrWiktionary(Wiktionary):
 
         # Save the result
         try:
-            result = self.do_edit(transcription, wikicode, basetimestamp)
+            result = self.__do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
             # If we got an editconflict, just restart from the beginning
             if "editconflict" in str(e):

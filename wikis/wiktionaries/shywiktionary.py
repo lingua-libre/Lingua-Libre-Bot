@@ -155,7 +155,7 @@ class ShyWiktionary(Wiktionary):
         # Save the result
         # print(f"Mot: {transcription}\n{wikicode}")
         try:
-            result = self.do_edit(transcription, wikicode, basetimestamp)
+            result = self.__do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
             if 'editconflict' in str(e):
                 self.execute(record)
