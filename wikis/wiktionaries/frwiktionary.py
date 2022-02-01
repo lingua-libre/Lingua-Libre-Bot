@@ -138,7 +138,19 @@ class FrWiktionary(Wiktionary):
             pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Get the language level of the speaker and convert it to text
-        language_level = self.get_language_level(record.language["level"])
+        language_level_id = record.language["level"]
+        language_level = ""
+        if language_level_id:
+            if language_level_id == 'Q12':
+                language_level = "débutant"
+            elif language_level_id == 'Q13':
+                language_level = "moyen"
+            elif language_level_id == 'Q14':
+                language_level = "bon"
+            elif language_level_id == 'Q15':
+                language_level = ""
+        if language_level:
+            language_level = "|niveau=" + language_level
 
         # Add the pronunciation file to the pronunciation section
         location = record.language["learning"] or record.speaker.residence
@@ -168,22 +180,6 @@ class FrWiktionary(Wiktionary):
             )
 
         return result
-
-    @staticmethod
-    def get_language_level(language_level_id):
-        language_level = ""
-        if not language_level_id:
-            if language_level_id == 'Q12':
-                language_level = "débutant"
-            elif language_level_id == 'Q13':
-                language_level = "moyen"
-            elif language_level_id == 'Q14':
-                language_level = "bon"
-            elif language_level_id == 'Q15':
-                language_level = ""
-        if language_level:
-            language_level = "|niveau=" + language_level
-        return language_level
 
     # Try to extract the language section
     def __get_language_section(self, wikicode, language_qid):
