@@ -1,37 +1,35 @@
 import datetime
 import json
 import time
+from typing import List
 
 import requests
 
 import sparql
 
+from data import Record
+
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
 BASEQUERY = """
 SELECT DISTINCT
-    ?record ?file ?speaker ?date ?transcription
-    ?qualifier ?wikidataId ?lexemeId ?wikipediaTitle ?wiktionaryEntry
-    ?languageIso ?languageQid ?languageWMCode ?linkeduser
-    ?residence ?language ?learningPlace ?languageLevel
+    ?record ?file ?transcription
+    ?wikidataId ?lexemeId ?wikipediaTitle ?wiktionaryEntry
+    ?languageIso ?languageQid ?languageWMCode
+    ?residence ?learningPlace ?languageLevel
 WHERE {
   ?record prop:P2 entity:Q2 .
   ?record prop:P3 ?file .
   ?record prop:P4 ?language .
   ?record prop:P5 ?speaker .
-  ?record prop:P6 ?date .
   ?record prop:P7 ?transcription .
-  OPTIONAL { ?record prop:P18 ?qualifier . }
   OPTIONAL { ?record prop:P12 ?wikidataId . }
   OPTIONAL { ?record prop:P21 ?lexemeId . }
   OPTIONAL { ?record prop:P19 ?wikipediaTitle . }
   OPTIONAL { ?record prop:P20 ?wiktionaryEntry . }
 
-  OPTIONAL { ?language prop:P13 ?languageIso . }
   OPTIONAL { ?language prop:P12 ?languageQid . }
-  OPTIONAL { ?language prop:P17 ?languageWMCode . }
 
-  ?speaker prop:P11 ?linkeduser .
   OPTIONAL { ?speaker prop:P14 ?residence . }
 
   ?speaker llp:P4 ?speakerLanguagesStatement .
@@ -49,32 +47,27 @@ WHERE {
 }"""
 
 
-def get_records(query):
+def get_records(query: str) -> List[Record]:
     print("Requesting data")
     raw_records = sparql.request(ENDPOINT, query)
     print("Request done")
-    records = [{
-        "id": sparql.format_value(record, "record"),
-        "file": sparql.format_value(record, "file"),
-        "date": sparql.format_value(record, "date"),
-        "transcription": sparql.format_value(record, "transcription"),
-        "qualifier": sparql.format_value(record, "qualifier"),
-        "user": sparql.format_value(record, "linkeduser"),
-        "speakerResidence": sparql.format_value(record, "residence"),
-        "links": {
+    records = [Record(
+        id=sparql.format_value(record, "record"),
+        file=sparql.format_value(record, "file"),
+        transcription=sparql.format_value(record, "transcription"),
+        speaker_residence=sparql.format_value(record, "residence"),
+        links={
             "wikidata": sparql.format_value(record, "wikidataId"),
             "lexeme": sparql.format_value(record, "lexemeId"),
             "wikipedia": sparql.format_value(record, "wikipediaTitle"),
             "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
         },
-        "language": {
-            "iso": sparql.format_value(record, "languageIso"),
+        language={
             "qid": sparql.format_value(record, "languageQid"),
-            "wm": sparql.format_value(record, "languageWMCode"),
             "learning": sparql.format_value(record, "learningPlace"),
             "level": sparql.format_value(record, "languageLevel"),
-        },
-    } for record in raw_records]
+        })
+        for record in raw_records]
     print(f"Found {len(records)} records.")
     return records
 
@@ -131,22 +124,23 @@ def simple_mode(args, supported_wikis):
     # Add some filters depending on the fetched arguments
     filters = ""
     if args.item is not None:
-        filters = (
-                "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
-        )
+        filters = "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
+
     else:
-        if args.startdate is not None:
-            filters = 'FILTER( ?date > "' + args.startdate + '"^^xsd:dateTime ).'
-        if args.enddate is not None:
-            filters += 'FILTER( ?date < "' + args.enddate + '"^^xsd:dateTime ).'
+        if args.startdate or args.enddate:
+            filters += ' ?record prop:P6 ?date .'
+            if args.startdate is not None:
+                filters += 'FILTER( ?date > "' + args.startdate + '"^^xsd:dateTime ).'
+            if args.enddate is not None:
+                filters += 'FILTER( ?date < "' + args.enddate + '"^^xsd:dateTime ).'
         if args.user is not None:
-            filters += 'FILTER( ?linkeduser = "' + args.user + '" ).'
+            filters += '?speaker prop:P11 ?linkeduser. FILTER( ?linkeduser = "' + args.user + '" ).'
         if args.lang is not None:
             filters += f"BIND( entity:{args.lang} as ?language )."
         elif args.langiso is not None:
-            filters += 'FILTER( ?languageIso = "' + args.langiso + '" ).'
+            filters += 'OPTIONAL { ?language prop:P13 ?languageIso.} FILTER( ?languageIso = "' + args.langiso + '" ).'
         elif args.langwm is not None:
-            filters += 'FILTER( ?languageWMCode = "' + args.langwm + '" ).'
+            filters += 'OPTIONAL { ?language prop:P17 ?languageWMCode.} FILTER( ?languageWMCode="' + args.langwm + '").'
 
             # Get the informations of all the records
     records = get_records(BASEQUERY.replace("#filters", filters))

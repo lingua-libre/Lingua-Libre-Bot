@@ -3,8 +3,10 @@
 # License: GNU GPL v2+
 
 import abc
+from typing import List
 
 import pywiki
+from data import Record
 
 
 class WikiFamily(abc.ABC):
@@ -35,9 +37,9 @@ class WikiFamily(abc.ABC):
         """
         self.api.set_dry_run(True)
 
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         return records
 
     @abc.abstractmethod
-    def execute(self, record):
-        return None
+    def execute(self, record: Record) -> bool:
+        return False

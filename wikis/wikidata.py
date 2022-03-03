@@ -4,7 +4,9 @@
 import abc
 import re
 import uuid
+from typing import List, Dict
 
+from data import Record
 from wikis.wikifamily import WikiFamily
 
 PRONUNCIATION_PROPERTY = "P443"
@@ -28,10 +30,10 @@ class AbcWikidata(WikiFamily, abc.ABC):
         super().__init__(user, password, "wikidata", "www")
 
     @abc.abstractmethod
-    def _get_wiki_name(self):
+    def _get_wiki_name(self) -> str:
         ...
 
-    def _is_link_valid(self, record) -> bool:
+    def _is_link_valid(self, record: str) -> bool:
         return True
 
     def _is_already_present(self, entity_id: str, filename: str) -> bool:
@@ -50,9 +52,9 @@ class AbcWikidata(WikiFamily, abc.ABC):
                     return True
         return False
 
-    def execute(self, record) -> bool:
+    def execute(self, record: Record) -> bool:
         wiki = self._get_wiki_name()
-        link = record["links"][wiki]
+        link = record.links[wiki]
 
         if link is None:
             return False
@@ -60,21 +62,16 @@ class AbcWikidata(WikiFamily, abc.ABC):
         if not self._is_link_valid(link):
             return False
 
-        if self._is_already_present(link, record["file"]):
-            print(record["id"] + ": already on Wikidata")
+        if self._is_already_present(link, record.file):
+            print(f'{record.id}: already on Wikidata')
             return False
 
         qualifiers = self._build_qualifiers(record)
 
-        result = self._do_edit(
-            link,
-            record["file"],
-            record["id"],
-            qualifiers
-        )
+        result = self._do_edit(link, record.file, record.id, qualifiers)
 
         if result:
-            print(f"{record['id']}: added to Wikidata - "
+            print(f"{record.id}: added to Wikidata - "
                   f"https://www.wikidata.org/wiki/{self._get_edit_link(link)}")
 
         return result
@@ -120,7 +117,7 @@ class AbcWikidata(WikiFamily, abc.ABC):
         print(response)
         return False
 
-    def _build_qualifiers(self, record):
+    def _build_qualifiers(self, record: Record) -> str:
         return ""
 
     @abc.abstractmethod
@@ -130,19 +127,18 @@ class AbcWikidata(WikiFamily, abc.ABC):
 
 class Wikidata(AbcWikidata):
 
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         """
         Prepare all the records for their use on Wikidata
         @param records:
         @return:
         """
         # Resolve all redirects
-        qids = []
-        redirects = {}
-        for record in records:
-            if record["links"]["wikidata"] is not None:
-                qids += [record["links"]["wikidata"]]
+        qids = [record.links["wikidata"]
+                for record in records
+                if record.links["wikidata"] is not None]
 
+        redirects = {}
         while len(qids) > 0:
             redirects = {
                 **redirects,
@@ -151,21 +147,21 @@ class Wikidata(AbcWikidata):
             qids = qids[50:]
 
         for record in records:
-            if record["links"]["wikidata"] is None:
+            if record.links["wikidata"] is None:
                 continue
 
-            qid = record["links"]["wikidata"]
+            qid = record.links["wikidata"]
             if qid in redirects:
-                record["links"]["wikidata"] = redirects[qid]
+                record.links["wikidata"] = redirects[qid]
 
         # If a record is linked to an article on Wikipedia but has no linked QID
         # we try to get it through sitelinks
         links = {}
         for record in records:
-            if not (record["links"]["wikidata"] is None and record["links"]["wikipedia"] is not None):
+            if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
                 continue
 
-            (lang, title) = record["links"]["wikipedia"].split(":", 1)
+            (lang, title) = record.links["wikipedia"].split(":", 1)
             if lang not in links:
                 links[lang] = []
             links[lang] += [title]
@@ -180,14 +176,14 @@ class Wikidata(AbcWikidata):
                 links[lang] = links[lang][50:]
 
         for record in records:
-            if not (record["links"]["wikidata"] is None and record["links"]["wikipedia"] is not None):
+            if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
                 continue
-            if record["links"]["wikipedia"] in connections:
-                record["links"]["wikidata"] = connections[record["links"]["wikipedia"]]
+            if record.links["wikipedia"] in connections:
+                record.links["wikidata"] = connections[record.links["wikipedia"]]
 
         return records
 
-    def __resolve_redirects(self, qids):
+    def __resolve_redirects(self, qids: List[str]) -> Dict[str, str]:
         """
         Find out if the given items are redirects or not
         @param qids:
@@ -257,17 +253,17 @@ class Wikidata(AbcWikidata):
     def _get_wiki_name(self) -> str:
         return "wikidata"
 
-    def _build_qualifiers(self, record):
+    def _build_qualifiers(self, record: Record) -> str:
         return (
                 LANG_PROPERTY
                 + '":[{"snaktype":"value","property":"'
                 + LANG_PROPERTY
                 + '","datavalue":{"type":"wikibase-entityid","value":{"id":"'
-                + record["language"]["qid"]
+                + record.language["qid"]
                 + '"}}}]'
         )
 
-    def _get_edit_link(self, link):
+    def _get_edit_link(self, link: str) -> str:
         return f'{link}#{PRONUNCIATION_PROPERTY}'
 
 

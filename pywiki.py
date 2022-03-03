@@ -68,6 +68,7 @@ class Pywiki:
                 self.session = requests.Session()
                 self.login()
                 relogin -= 1
+
         raise Exception("API error", response["error"])
 
     def login(self) -> int:

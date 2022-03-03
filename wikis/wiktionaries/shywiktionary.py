@@ -3,10 +3,12 @@
 # License: GNU GPL v2+
 
 import re
+from typing import List
 
 import wikitextparser as wtp
 
 import sparql
+from data import Record
 from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
@@ -62,7 +64,7 @@ class ShyWiktionary(Wiktionary):
     # Prepare the records to be added on the Shawiya Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by shywiktionary)
     # - Get the labels of the speaker's location in Shawiya
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         # Get BCP 47 language code map
         self.language_code_map = {}
         raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
@@ -75,10 +77,10 @@ class ShyWiktionary(Wiktionary):
             # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
-            elif record["speakerResidence"] is not None:
-                locations.add(record["speakerResidence"])
+            if record.language["learning"] is not None:
+                locations.add(record.language["learning"])
+            elif record.speaker_residence is not None:
+                locations.add(record.speaker_residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
@@ -100,11 +102,11 @@ class ShyWiktionary(Wiktionary):
         @return:
         """
         # Normalize the record using shywiktionary's titles conventions
-        transcription = replace_apostrophe(record["transcription"])
+        transcription = replace_apostrophe(record.transcription)
 
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record["file"]
+            transcription, record.file
         )
 
         # Whether there is no entry for this record on shywiktionary
@@ -113,17 +115,17 @@ class ShyWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(f"{record['id']}//{transcription}: already on shywiktionary")
+            print(f"{record.id}//{transcription}: already on shywiktionary")
             return False
 
         # Try to extract the section of the language of the record
         language_section = self.__get_language_section(
-            wikicode, record["language"]["qid"]
+            wikicode, record.language["qid"]
         )
 
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + "//" + transcription + ": language section not found")
+            print(f'{record.id}//{transcription}: language section not found')
             return False
 
         # Try to extract the pronunciation subsection
@@ -134,12 +136,12 @@ class ShyWiktionary(Wiktionary):
             pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Add the pronunciation file to the pronunciation section
-        location = record["language"]["learning"] or record["speakerResidence"]
+        location = record.language["learning"] or record.speaker_residence
 
         self.__append_file(
             pronunciation_section,
-            record["file"],
-            record["language"]["qid"],
+            record.file,
+            record.language["qid"],
             location,
         )
 
@@ -154,9 +156,7 @@ class ShyWiktionary(Wiktionary):
                 raise e
         if result:
             print(
-                record["id"] + "//" + transcription
-                + ": added to shywiktionary - https://shy.wiktionary.org/wiki/"
-                + transcription
+                f'{record.id}//{transcription}: added to shywiktionary - https://shy.wiktionary.org/wiki/{transcription}'
             )
 
         return result

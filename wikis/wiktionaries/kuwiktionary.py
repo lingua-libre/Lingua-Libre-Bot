@@ -8,10 +8,12 @@
 # page contenant déjà une section « pron » : gûz (Q379244)
 
 import re
+from typing import List
 
 import wikitextparser as wtp
 
 import sparql
+from data import Record
 from wikis.wiktionary import Wiktionary, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
@@ -49,7 +51,7 @@ class KuWiktionary(Wiktionary):
     # Prepare the records to be added on the Kurdish Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by kuwiktionary)
     # - Get the labels of the speaker's location in Kurdish
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
 
         # Get BCP 47 language code map
         self.language_code_map = {}
@@ -63,10 +65,10 @@ class KuWiktionary(Wiktionary):
         # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
-            if record["speakerResidence"] is not None:
-                locations.add(record["speakerResidence"])
+            if record.language["learning"] is not None:
+                locations.add(record.language["learning"])
+            if record.speaker_residence is not None:
+                locations.add(record.speaker_residence)
 
         # Prepare two location maps
         # One that contains both the city and the country (for all languages but Kurdish)
@@ -87,13 +89,11 @@ class KuWiktionary(Wiktionary):
         return records
 
     # Try to use the given record on the Kurdish Wiktionary
-    def execute(self, record):
-        transcription = record["transcription"]
+    def execute(self, record: Record) -> bool:
+        transcription = record.transcription
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record["file"]
-        )
+        (is_already_present, wikicode, basetimestamp) = self.get_entry(transcription, record.file)
 
         # Whether there is no entry for this record on kuwiktionary
         if not wikicode:
@@ -101,40 +101,39 @@ class KuWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + "//" + transcription + ": already on kuwiktionary")
+            print(f'{record.id}//{transcription}: already on kuwiktionary')
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.get_language_section(
-            wikicode, record["language"]["qid"]
-        )
+        language_section = self.__get_language_section(wikicode, record.language["qid"])
 
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + "//" + transcription + ": language section not found")
+            print(f'{record.id}//{transcription}: language section not found')
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.get_pronunciation_section(language_section)
+        pronunciation_section = self.__get_pronunciation_section(language_section)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
-            pronunciation_section = self.create_pronunciation_section(language_section)
+            pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Choose the location to be displayed with the following order
         # 1) place of learning
         # 2) place of residence
-        location = record["language"]["learning"] or record["speakerResidence"]
+        location = record.language["learning"] or record.speaker_residence
 
         # Add the pronunciation file to the pronunciation subsection
-        self.append_file(
+        self.__append_file(
             pronunciation_section,
-            record["file"],
-            record["language"]["qid"],
+            record.file,
+            record.language["qid"],
             location
         )
 
         # Save the result
+        result = False
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
@@ -146,19 +145,12 @@ class KuWiktionary(Wiktionary):
 
         if result:
             print(
-                record["id"] + "//" + transcription
-                + ": added to kuwiktionary - https://ku.wiktionary.org/wiki/"
-                + transcription
-            )
+                f'{record.id}//{transcription}: added to kuwiktionary - https://ku.wiktionary.org/wiki/{transcription}')
 
         return result
 
-    """
-    Private methods
-    """
-
     # Try to extract the language section
-    def get_language_section(self, wikicode, language_qid):
+    def __get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
             return None
@@ -178,7 +170,7 @@ class KuWiktionary(Wiktionary):
         return None
 
     # Try to extract the pronunciation subsection
-    def get_pronunciation_section(self, wikicode):
+    def __get_pronunciation_section(self, wikicode):
         for section in wikicode.sections:
             if section.title is None:
                 continue
@@ -189,9 +181,10 @@ class KuWiktionary(Wiktionary):
         return None
 
     # Create a pronunciation subsection
-    def create_pronunciation_section(self, wikicode):
+    def __create_pronunciation_section(self, wikicode):
         # The pronunciation section is the first one of the language section
-        # It comes just after "=={{ziman|qqq}}=="        
+        # It comes just after "=={{ziman|qqq}}=="
+        section = None
         for section in wikicode.sections:
             if section.title is None:
                 continue
@@ -200,6 +193,8 @@ class KuWiktionary(Wiktionary):
             if re.search(r'{{ziman\|[a-z]+}}', section.title.replace(" ", "")):
                 break
 
+        if not section:
+            return
         lang_section = section
 
         # Add a new line before the pronunciation section only
@@ -214,10 +209,10 @@ class KuWiktionary(Wiktionary):
             lang_section.contents, new_section, re.compile(r"===")
         )
 
-        return self.get_pronunciation_section(wikicode)
+        return self.__get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid, location_qid):
+    def __append_file(self, wikicode, filename, language_qid, location_qid):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
@@ -244,11 +239,7 @@ class KuWiktionary(Wiktionary):
         wikicode.sections[1].contents = str(section_content)
 
         # Remove the ugly hack, see comment line 17
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
-            "$1\n", ""
-        )
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("$1\n", "")
 
         # Remove unneeded blank lines
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
-            "\n\n", ""
-        )
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("\n\n", "")

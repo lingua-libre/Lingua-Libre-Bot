@@ -3,10 +3,12 @@
 # License: GNU GPL v2+
 
 import re
+from typing import List
 
 import wikitextparser as wtp
 
 import sparql
+from data import Record
 from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
@@ -60,7 +62,7 @@ class FrWiktionary(Wiktionary):
     # Prepare the records to be added on the French Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
     # - Get the labels of the speaker's location in French
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         # Get BCP 47 language code map
         self.language_code_map = {}
         raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
@@ -73,10 +75,10 @@ class FrWiktionary(Wiktionary):
         # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
-            elif record["speakerResidence"] is not None:
-                locations.add(record["speakerResidence"])
+            if record.language["learning"] is not None:
+                locations.add(record.language["learning"])
+            elif record.speaker_residence is not None:
+                locations.add(record.speaker_residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
@@ -93,14 +95,12 @@ class FrWiktionary(Wiktionary):
         return records
 
     # Try to use the given record on the French Wiktionary
-    def execute(self, record):
+    def execute(self, record: Record) -> bool:
         # Normalize the record using frwiktionary's titles conventions
-        transcription = replace_apostrophe(record["transcription"])
+        transcription = replace_apostrophe(record.transcription)
 
         # Fetch the content of the page having the transcription for title
-        is_already_present, wikicode, basetimestamp = self.get_entry(
-            transcription, record["file"]
-        )
+        is_already_present, wikicode, basetimestamp = self.get_entry(transcription, record.file)
 
         # Whether there is no entry for this record on frwiktionary
         if not wikicode:
@@ -108,28 +108,26 @@ class FrWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + "//" + transcription + ": already on frwiktionary")
+            print(f'{record.id}//{transcription}: already on frwiktionary')
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.get_language_section(
-            wikicode, record["language"]["qid"]
-        )
+        language_section = self.__get_language_section(wikicode, record.language["qid"])
 
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + "//" + transcription + ": language section not found")
+            print(f'{record.id}//{transcription}: language section not found')
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.get_pronunciation_section(language_section)
+        pronunciation_section = self.__get_pronunciation_section(language_section)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
-            pronunciation_section = self.create_pronunciation_section(language_section)
+            pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Get the language level of the speaker and convert it to text
-        language_level_id = record["language"]["level"]
+        language_level_id = record.language["level"]
         language_level = ""
         if language_level_id:
             if language_level_id == 'Q12':
@@ -144,11 +142,11 @@ class FrWiktionary(Wiktionary):
             language_level = f"|niveau={language_level}"
 
         # Add the pronunciation file to the pronunciation section
-        location = record["language"]["learning"] or record["speakerResidence"]
-        self.append_file(
+        location = record.language["learning"] or record.speaker_residence
+        self.__append_file(
             pronunciation_section,
-            record["file"],
-            record["language"]["qid"],
+            record.file,
+            record.language["qid"],
             location,
             language_level
         )
@@ -164,19 +162,12 @@ class FrWiktionary(Wiktionary):
                 raise e
         if result:
             print(
-                record["id"] + "//" + transcription
-                + ": added to frwiktionary - https://fr.wiktionary.org/wiki/"
-                + transcription
-            )
+                f'{record.id}//{transcription}: added to frwiktionary - https://fr.wiktionary.org/wiki/{transcription}')
 
         return result
 
-    """
-    Private methods
-    """
-
     # Try to extract the language section
-    def get_language_section(self, wikicode, language_qid):
+    def __get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
             return None
@@ -196,7 +187,7 @@ class FrWiktionary(Wiktionary):
         return None
 
     # Try to extract the pronunciation subsection
-    def get_pronunciation_section(self, wikicode):
+    def __get_pronunciation_section(self, wikicode):
         for section in wikicode.sections:
             if section.title is None:
                 continue
@@ -207,7 +198,7 @@ class FrWiktionary(Wiktionary):
         return None
 
     # Create a pronunciation subsection
-    def create_pronunciation_section(self, wikicode):
+    def __create_pronunciation_section(self, wikicode):
         # The sections order is fixed, etymology, word type (and it's many
         # subsections, pronunciation, anagram, see also and references)
         # Travel across the sections until we find one which comes after
@@ -226,10 +217,10 @@ class FrWiktionary(Wiktionary):
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
-        return self.get_pronunciation_section(wikicode)
+        return self.__get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid, location_qid, language_level):
+    def __append_file(self, wikicode, filename, language_qid, location_qid, language_level):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
@@ -254,6 +245,4 @@ class FrWiktionary(Wiktionary):
         wikicode.sections[1].contents = str(section_content)
 
         # Remove the ugly hack, see comment line 17
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
-            "$1\n", ""
-        )
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("$1\n", "")

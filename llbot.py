@@ -20,8 +20,7 @@ if len(res) == 0:
     raise OSError("config.ini does not exist")
 
 
-# Main
-def main():
+def main() -> None:
     # Create an object for each supported wiki
     user = config.get("wiki", "user")
     password = config.get("wiki", "password")

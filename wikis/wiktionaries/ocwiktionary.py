@@ -83,10 +83,10 @@ class OcWiktionary(Wiktionary):
             # Extract all different locations
         locations = set()
         for record in records:
-            if record["language"]["learning"] is not None:
-                locations.add(record["language"]["learning"])
-            elif record["speakerResidence"] is not None:
-                locations.add(record["speakerResidence"])
+            if record.language["learning"] is not None:
+                locations.add(record.language["learning"])
+            elif record.speaker_residence is not None:
+                locations.add(record.speaker_residence)
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
@@ -102,41 +102,39 @@ class OcWiktionary(Wiktionary):
         return records
 
     def execute(self, record):
-        transcription = replace_apostrophe(record["transcription"])
+        transcription = replace_apostrophe(record.transcription)
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record["file"]
-        )
+        (is_already_present, wikicode, basetimestamp) = self.get_entry(transcription, record.file)
 
         # Whether there is no entry for this record on ocwiktionary
         if not wikicode:
             return False
 
-            # Whether the record is already inside the entry
+        # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + ": already on ocwiktionary")
+            print(f'{record.id}: already on ocwiktionary')
             return False
 
-            # Check if the record's language has a BCP 47 code, stop here if not
-        if record["language"]["qid"] not in self.language_code_map:
-            print(record["id"] + ": language code not found")
+        # Check if the record's language has a BCP 47 code, stop here if not
+        if record.language["qid"] not in self.language_code_map:
+            print(f'{record.id}: language code not found')
             return False
 
-        lang = self.language_code_map[record["language"]["qid"]]
+        lang = self.language_code_map[record.language["qid"]]
 
-        motvar = re.search(r"^oc-([^\-]*?)(-|$)", lang)
+        motvar = re.search(r"^oc-([^\-]*?)(-|$)", lang)  # FIXME *? matches 0 times the pattern
 
         labelvar = False
 
         if motvar:
-            if record["language"]["qid"] in self.language_label_map:
-                labelvar = self.language_label_map[record["language"]["qid"]]
+            if record.language["qid"] in self.language_label_map:
+                labelvar = self.language_label_map[record.language["qid"]]
             lang = "oc"
 
             # Whether there is no section for the current language
         if "{=" + lang + "=}" not in wikicode:
-            print(record["id"] + ": language section not found")
+            print(f'{record.id}: language section not found')
             return False
 
         motif = ""
@@ -163,9 +161,7 @@ class OcWiktionary(Wiktionary):
                 str(wikicode),
             )
 
-        learning_or_residence = (
-                record["language"]["learning"] or record["speakerResidence"]
-        )
+        learning_or_residence = record.language["learning"] or record.speaker_residence
 
         loccode = ""
         if learning_or_residence:
@@ -194,14 +190,7 @@ class OcWiktionary(Wiktionary):
                 if loccode != "":
                     loccode = f'{loccode} : '
 
-        codefichier = (
-                loccode
-                + "escotar « "
-                + record["transcription"]
-                + " » [[Fichièr:"
-                + record["file"]
-                + "]]"
-        )
+        codefichier = f'{loccode}escotar « {record.transcription} » [[Fichièr:{record.file}]]'
 
         wikicode = re.sub(
             r"{="
@@ -221,10 +210,6 @@ class OcWiktionary(Wiktionary):
             else:
                 raise e
         if result:
-            print(
-                record["id"]
-                + ": added to ocwiktionary - https://oc.wiktionary.org/wiki/"
-                + transcription
-            )
+            print(f'{record.id}: added to ocwiktionary - https://oc.wiktionary.org/wiki/{transcription}')
 
         return result
