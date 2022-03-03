@@ -1,7 +1,5 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Pamputt
-# Date: 12 July 2021
 # License: GNU GPL v2+
 
 import re

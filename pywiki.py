@@ -1,7 +1,5 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Antoine "0x010C" Lamielle
-# Date: 18 March 2016
 # License: GNU GPL v2+
 
 import json

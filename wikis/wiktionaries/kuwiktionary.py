@@ -1,7 +1,5 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Pamputt
-# Date: 28 September 2021
 # License: GNU GPL v2+
 
 # NOTE:
