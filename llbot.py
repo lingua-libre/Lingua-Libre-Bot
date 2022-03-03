@@ -115,7 +115,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print('\nStopping Lingua Libre Bot')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+        sys.exit(0)
