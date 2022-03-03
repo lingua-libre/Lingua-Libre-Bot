@@ -4,10 +4,12 @@
 # Date: 18 March 2016
 # License: GNU GPL v2+
 
-import time
 import json
-import requests
+import time
+
 import backoff
+import requests
+
 from version import __version__
 
 
@@ -19,24 +21,32 @@ class Pywiki:
         self.dry_run = False
         self.api_endpoint = api_endpoint
         self.assertion = assertion
-        if self.assertion == "bot":
-            self.limit = 5000
-        else:
-            self.limit = 500
-
+        self.limit = 5000 if self.assertion == "bot" else 500
         self.session = requests.Session()
-        self.session.headers.update({'User-Agent': 'Lingua Libre Bot/' + __version__ +  ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'})
+        self.session.headers.update(
+            {
+                'User-Agent': f'Lingua Libre Bot/{__version__}'
+                              + ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'
+            }
+        )
 
     def set_dry_run(self, dry_run):
         self.dry_run = dry_run
 
-    """
-    Perform a given request with a simple but usefull error managment
-    """
-
-    @backoff.on_exception(backoff.expo, (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError, json.decoder.JSONDecodeError), max_tries=8)
+    @backoff.on_exception(backoff.expo,
+                          (requests.exceptions.Timeout,
+                           requests.exceptions.ConnectionError,
+                           requests.exceptions.ChunkedEncodingError,
+                           json.decoder.JSONDecodeError),
+                          max_tries=8)
     def request(self, data, files=None):
-        if self.dry_run == True and data["action"] != "query":
+        """
+        Perform a given request with a simple but usefull error management
+        @param data:
+        @param files:
+        @return:
+        """
+        if self.dry_run and data["action"] != "query":
             print(data)
             return {"dryrun": True}
 
@@ -55,7 +65,7 @@ class Pywiki:
                         continue
                     break
                 return response
-            except (requests.exceptions.ConnectionError):
+            except requests.exceptions.ConnectionError:
                 time.sleep(5)
                 self.session = requests.Session()
                 self.login()
@@ -94,6 +104,7 @@ class Pywiki:
     """
     Get a crsf token from frwiki to be able to edit a page
     """
+
     def get_csrf_token(self):
         r = self.request(
             {

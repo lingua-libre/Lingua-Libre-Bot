@@ -5,10 +5,11 @@
 # License: GNU GPL v2+
 
 import re
+
 import wikitextparser as wtp
 
 import sparql
-from wikis.wiktionary import Wiktionary
+from wikis.wiktionary import Wiktionary, replace_apostrophe
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
@@ -45,23 +46,18 @@ WHERE {
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Categoria):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Categoria):[^]]+]]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
 
 
 class OcWiktionary(Wiktionary):
 
-    def __init__(self, user, password):
+    def __init__(self, user: str, password: str) -> None:
         """
         Constructor.
-
-        Parameters
-        ----------
-        user
-            Username to login to the wiki.
-        password
-            Password to log into the account.
+        @param user: Username to login to the wiki
+        @param password: Password to log into the account
         """
         super().__init__(user, password, "oc", SUMMARY)
 
@@ -96,24 +92,19 @@ class OcWiktionary(Wiktionary):
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
-            LOCATION_QUERY.replace("$1", " wd:".join(locations))
-        )
+                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
+                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
             self.location_map[sparql.format_value(line, "location")] = country
             if country != location:
-                self.location_map[sparql.format_value(line, "location")] += (
-                    " (" + location + ")"
-                )
+                self.location_map[sparql.format_value(line, "location")] += f" ({location})"
 
         return records
 
-        # Try to use the given record on the Occitan Wiktionary
-
     def execute(self, record):
-        # Normalize the record using ocwiktionary's titles conventions
-        transcription = self.normalize(record["transcription"])
+        transcription = replace_apostrophe(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
@@ -136,12 +127,11 @@ class OcWiktionary(Wiktionary):
 
         lang = self.language_code_map[record["language"]["qid"]]
 
-        motvar = re.search(r"^oc\-([^\-]*?)(\-|$)", lang)
+        motvar = re.search(r"^oc-([^\-]*?)(-|$)", lang)
 
         labelvar = False
 
         if motvar:
-            codevar = motvar.group(1)
             if record["language"]["qid"] in self.language_label_map:
                 labelvar = self.language_label_map[record["language"]["qid"]]
             lang = "oc"
@@ -153,17 +143,16 @@ class OcWiktionary(Wiktionary):
 
         motif = ""
         stringlg = "{=" + lang + "=}"
-        for i in range(0, len(stringlg)):
-            lettre = stringlg[i]
+        for i in range(len(stringlg)):
             if i > 0:
-                motif = motif + "|"
-            motif = motif + stringlg[0:i].replace("{", "\{")
-            motif = motif + "[^" + stringlg[i].replace("{", "\{") + "]"
+                motif += "|"
+            motif += stringlg[:i].replace("{", "\{")
+            motif = f'{motif}[^' + stringlg[i].replace("{", "\{") + "]"
 
         motif = re.search(
             r"{{="
             + str(lang)
-            + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|$)",
+            + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|$)",
             str(wikicode),
         )
 
@@ -171,24 +160,22 @@ class OcWiktionary(Wiktionary):
             wikicode = re.sub(
                 r"{{="
                 + str(lang)
-                + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^\=]*?)=}}|{{-sil-}}|{{-([^\-]*?)\-\|([a-z]+)}}|$)",
+                + "=}}(([^{]|{[^{]|{{[^\-=]|{{-[^p]|{{-p[^r]|{{-pr[^o]|{{-pro[^n]|{{-pron[^-]|{{-pron-[^}]|{{-pron-}[^}])*?)({{=([^=]*?)=}}|{{-sil-}}|{{-([^\-]*?)-\|([a-z]+)}}|$)",
                 "{{=" + lang + "=}}\g<1>{{-pron-}}\g<3>",
                 str(wikicode),
             )
 
+        learning_or_residence = (
+                record["language"]["learning"] or record["speaker"]["residence"]
+        )
 
-        learning_or_residence = ""
-        if record["language"]["learning"]:
-            learning_or_residence = record["language"]["learning"]
-        else:
-            learning_or_residence = record["speaker"]["residence"]
         loccode = ""
         if learning_or_residence:
 
             self.location_map = {}
             raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                LOCATION_QUERY.replace("$1", " wd:" + learning_or_residence)
-            )
+                                              LOCATION_QUERY.replace("$1", " wd:" + learning_or_residence)
+                                              )
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")
                 location = sparql.format_value(raw_location_map[0], "locationLabel")
@@ -196,46 +183,45 @@ class OcWiktionary(Wiktionary):
                 if country:
                     loccode = country
 
-                    if location and location != country:
-                        loccode = loccode + " (" + location + ")"
+                    if location and location != loccode:
+                        loccode = f'{loccode} ({location})'
                 elif location:
                     loccode = location
                 else:
                     loccode = ""
 
                 if labelvar:
-                    loccode = loccode + " - " + labelvar
+                    loccode = f'{loccode} - {labelvar}'
 
                 if loccode != "":
-                    loccode = loccode + " : "
+                    loccode = f'{loccode} : '
 
         codefichier = (
-            loccode
-            + "escotar « "
-            + record["transcription"]
-            + " » [[Fichièr:"
-            + record["file"]
-            + "]]"
+                loccode
+                + "escotar « "
+                + record["transcription"]
+                + " » [[Fichièr:"
+                + record["file"]
+                + "]]"
         )
 
         wikicode = re.sub(
-            r"\{="
+            r"{="
             + str(lang)
-            + "=\}(([^\{]|\{[^=])*?)\{\{-pron-\}\}(([^\{]|\{[^\{]|\{\{[^\-])*?)(\{\{-|\{\{=|$)",
+            + r"=}(([^{]|{[^=])*?){{-pron-}}(([^{]|{[^{]|{{[^\-])*?)({{-|{{=|$)",
             "{=" + lang + "=}\g<1>{{-pron-}}\g<3>" + codefichier + "\n\g<5>",
             str(wikicode),
         )
 
         # Save the result
+        result = False
         try:
             result = self.do_edit(transcription, wtp.parse(wikicode), basetimestamp)
         except Exception as e:
-            # If we got an editconflict, just restart from the beginning
-            if str(e).find("editconflict") > -1:
+            if "editconflict" in str(e):
                 self.execute(record)
             else:
                 raise e
-
         if result:
             print(
                 record["id"]
@@ -244,11 +230,3 @@ class OcWiktionary(Wiktionary):
             )
 
         return result
-
-    """
-    Private methods
-    """
-
-    # Normalize the transcription to fit ocwiktionary's title conventions
-    def normalize(self, transcription):
-        return transcription.replace("'", "’")

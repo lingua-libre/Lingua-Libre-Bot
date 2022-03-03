@@ -88,8 +88,8 @@ def get_records(query):
 def live_mode(args, supported_wikis):
     delay = args.delay
     prev_timestamp = (
-        datetime.datetime.utcnow() - datetime.timedelta(seconds=args.backcheck)
-    ).replace(microsecond=0).isoformat() + "Z"
+                             datetime.datetime.utcnow() - datetime.timedelta(seconds=args.backcheck)
+                     ).replace(microsecond=0).isoformat() + "Z"
     prev_items = set()
     items = set()
     while True:

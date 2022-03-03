@@ -5,10 +5,11 @@
 # License: GNU GPL v2+
 
 import re
+
 import wikitextparser as wtp
 
 import sparql
-from wikis.wiktionary import Wiktionary
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
@@ -39,23 +40,18 @@ WHERE {
 """
 
 BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Catégorie):[^\]]+\]\]|{{clé de tri\|[^}]+}})?)*$",
+    r"(?:\s*(?:\[\[(?:Category|Catégorie):[^]]+]]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
 
 
 class FrWiktionary(Wiktionary):
 
-    def __init__(self, user, password):
+    def __init__(self, user: str, password: str) -> None:
         """
         Constructor.
-
-        Parameters
-        ----------
-        user
-            Username to login to the wiki.
-        password
-            Password to log into the account.
+        @param user: Username to login to the wiki
+        @param password: Password to log into the account
         """
         super().__init__(user, password, "fr", SUMMARY)
 
@@ -86,8 +82,8 @@ class FrWiktionary(Wiktionary):
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
-            LOCATION_QUERY.replace("$1", " wd:".join(locations))
-        )
+                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
+                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
@@ -101,7 +97,7 @@ class FrWiktionary(Wiktionary):
     # Try to use the given record on the French Wiktionary
     def execute(self, record):
         # Normalize the record using frwiktionary's titles conventions
-        transcription = self.normalize(record["transcription"])
+        transcription = replace_apostrophe(record["transcription"])
 
         # Fetch the content of the page having the transcription for title
         is_already_present, wikicode, basetimestamp = self.get_entry(
@@ -140,23 +136,17 @@ class FrWiktionary(Wiktionary):
         if language_level_id:
             if language_level_id == 'Q12':
                 language_level = "débutant"
-            if language_level_id == 'Q13':
+            elif language_level_id == 'Q13':
                 language_level = "moyen"
-            if language_level_id == 'Q14':
+            elif language_level_id == 'Q14':
                 language_level = "bon"
-            # do not display anything if "native"
-            if language_level_id == 'Q15':
+            elif language_level_id == 'Q15':
                 language_level = ""
         if language_level:
-            language_level = "|niveau=" + language_level
+            language_level = f"|niveau={language_level}"
 
         # Add the pronunciation file to the pronunciation section
-        location = ""
-        if record["language"]["learning"]:
-            location = record["language"]["learning"]
-        else:
-            location = record["speaker"]["residence"]
-
+        location = record["language"]["learning"] or record["speaker"]["residence"]
         self.append_file(
             pronunciation_section,
             record["file"],
@@ -166,15 +156,14 @@ class FrWiktionary(Wiktionary):
         )
 
         # Save the result
+        result = False
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
-            # If we got an editconflict, just restart from the beginning
-            if str(e).find("editconflict") > -1:
+            if "editconflict" in str(e):
                 self.execute(record)
             else:
                 raise e
-
         if result:
             print(
                 record["id"] + "//" + transcription
@@ -187,10 +176,6 @@ class FrWiktionary(Wiktionary):
     """
     Private methods
     """
-
-    # Normalize the transcription to fit frwiktionary's title conventions
-    def normalize(self, transcription):
-        return transcription.replace("'", "’")
 
     # Try to extract the language section
     def get_language_section(self, wikicode, language_qid):
@@ -239,8 +224,8 @@ class FrWiktionary(Wiktionary):
 
         # Append an empty pronunication section to the last section which
         # is not in the following sections list
-        prev_section.contents = self.safe_append_text(
-            prev_section.contents, EMPTY_PRONUNCIATION_SECTION
+        prev_section.contents = safe_append_text(
+            prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
         return self.get_pronunciation_section(wikicode)
@@ -259,13 +244,14 @@ class FrWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        section_content.sections[0].contents = self.safe_append_text(
+        section_content.sections[0].contents = safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
+            BOTTOM_REGEX
         )
 
         # Remove the {{ébauche-pron-audio|fr}} if there was one
-        section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
+        section_content = re.sub(r"\*?\s*{{ébauche-pron-audio\|fr}}\s*\n", "", str(section_content))
 
         wikicode.sections[1].contents = str(section_content)
 
@@ -273,15 +259,3 @@ class FrWiktionary(Wiktionary):
         wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
             "$1\n", ""
         )
-
-    # Append a string to a wikitext string, but before any category or sortkey
-    def safe_append_text(self, content, text):
-        content = str(content)
-
-        search = BOTTOM_REGEX.search(content)
-        if search:
-            index = search.start()
-        else:
-            index = len(content)
-
-        return content[:index] + text + content[index:]

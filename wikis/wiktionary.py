@@ -5,41 +5,56 @@
 # License: GNU GPL v2+
 
 import abc
-import wikitextparser as wtp
 import re
+from typing import Tuple, Optional
+
+import wikitextparser as wtp
 
 from wikis.wikifamily import WikiFamily
 
 SANITIZE_REGEX = re.compile(r"== +\n")
 
 
+def replace_apostrophe(text: str) -> str:
+    """
+    Replace straight apostrophes with typographic apostrophes.
+    @param text:
+    @return:
+    """
+    return text.replace("'", "’")
+
+
+def safe_append_text(content, text, pattern: re.Pattern):
+    """
+    Append a string to a wikitext string, but before any category
+    @param content:
+    @param text:
+    @param pattern:
+    @return:
+    """
+    content = str(content)
+
+    search = pattern.search(content)
+    index = search.start() if search else len(content)
+    return content[:index] + text + content[index:]
+
+
 class Wiktionary(WikiFamily, abc.ABC):
 
-    def __init__(self, user, password, language_domain: str, summary: str):
+    def __init__(self, user: str, password: str, language_domain: str, summary: str) -> None:
         """
         Constructor.
-
-        Parameters
-        ----------
-        user
-            Username to login to the wiki.
-        password
-            Password to log into the account.
-        language_domain:
-            The "language" of the wiki (e.g. 'fr', 'en', etc.).
-        summary:
-            The edit summary.
+        @param user: Username to login to the wiki
+        @param password: Password to log into the account
+        @param language_domain: The "language" of the wiki (e.g. 'fr', 'en', etc.)
+        @param summary: The edit summary
         """
         super().__init__(user, password, "wiktionary", language_domain)
         self.summary = summary
 
-    """
-    Public methods
-    """
-
     # Fetch the contents of the given Wiktionary entry,
     # and check by the way whether the file is already in it.
-    def get_entry(self, pagename, filename):
+    def get_entry(self, pagename: str, filename: str) -> Tuple[bool, Optional[wtp.WikiText], int]:
         response = self.api.request(
             {
                 "action": "query",
@@ -48,14 +63,15 @@ class Wiktionary(WikiFamily, abc.ABC):
                 "prop": "images|revisions",
                 "rvprop": "content|timestamp",
                 "titles": pagename,
-                "imimages": "File:" + filename,
+                "imimages": f"File:{filename}",
             }
         )
+
         page = response["query"]["pages"][0]
 
         # If no pages have been found on this wiki for the given title
         if "missing" in page:
-            return False, False, 0
+            return False, None, 0
 
         # If there is the 'images' key, this means that the API has found
         # the file at least once in the page, see [[:mw:API:Images]]
