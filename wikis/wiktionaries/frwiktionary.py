@@ -7,7 +7,7 @@
 import re
 import wikitextparser as wtp
 
-from sparql import Sparql
+import sparql
 from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
@@ -67,11 +67,9 @@ class FrWiktionary(Wiktionary):
     # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
     # - Get the labels of the speaker's location in French
     def prepare(self, records):
-        sparql = Sparql(SPARQL_ENDPOINT)
-
         # Get BCP 47 language code map
         self.language_code_map = {}
-        raw_language_code_map = sparql.request(LANGUAGE_QUERY)
+        raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
 
         for line in raw_language_code_map:
             self.language_code_map[
@@ -87,7 +85,7 @@ class FrWiktionary(Wiktionary):
                 locations.add(record["speaker"]["residence"])
 
         self.location_map = {}
-        raw_location_map = sparql.request(
+        raw_location_map = sparql.request(SPARQL_ENDPOINT,
             LOCATION_QUERY.replace("$1", " wd:".join(locations))
         )
         for line in raw_location_map:

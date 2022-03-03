@@ -2,7 +2,7 @@ import time
 import datetime
 import requests
 import json
-from sparql import Sparql
+import sparql
 
 
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
@@ -50,9 +50,8 @@ WHERE {
 
 
 def get_records(query):
-    sparql = Sparql(ENDPOINT)
     print("Requesting data")
-    raw_records = sparql.request(query)
+    raw_records = sparql.request(ENDPOINT, query)
     print("Request done")
     records = []
     for record in raw_records:
