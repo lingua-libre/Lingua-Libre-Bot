@@ -13,7 +13,7 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
-from data import Record
+from record import Record
 from wikis.wiktionary import Wiktionary, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"

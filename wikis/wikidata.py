@@ -6,7 +6,7 @@ import re
 import uuid
 from typing import List, Dict
 
-from data import Record
+from record import Record
 from wikis.wikifamily import WikiFamily
 
 PRONUNCIATION_PROPERTY = "P443"
