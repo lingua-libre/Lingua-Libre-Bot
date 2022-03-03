@@ -5,6 +5,7 @@
 # License: GNU GPL v2+
 
 import abc
+
 import pywiki
 
 
@@ -47,6 +48,9 @@ class WikiFamily(abc.ABC):
         """
         self.api.set_dry_run(True)
 
+    def prepare(self, records):
+        return records
+
     """
     Abstract methods
     """
@@ -54,7 +58,3 @@ class WikiFamily(abc.ABC):
     @abc.abstractmethod
     def execute(self, record):
         return None
-
-    @abc.abstractmethod
-    def prepare(self, records):
-        return records

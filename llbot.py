@@ -4,19 +4,17 @@
 # Date: 9 June 2018
 # License: GNU GPL v2+
 
-import configparser
 import argparse
+import configparser
 import os
 import sys
 
 import lili
-
-from wikis.wikidata.wikidata import Wikidata
+from wikis.wikidata import Wikidata, Lexemes
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
-from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
 res = config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
@@ -32,9 +30,9 @@ def main():
     supported_wikis = {
         "wikidatawiki": Wikidata(user, password),
         "lexemes": Lexemes(user, password),
-        "frwiktionary":  FrWiktionary(user, password),
-        "kuwiktionary":  KuWiktionary(user, password),
-        "ocwiktionary":  OcWiktionary(user, password),
+        "frwiktionary": FrWiktionary(user, password),
+        "kuwiktionary": KuWiktionary(user, password),
+        "ocwiktionary": OcWiktionary(user, password),
         "shywiktionary": ShyWiktionary(user, password),
     }
 
@@ -123,4 +121,3 @@ if __name__ == "__main__":
             sys.exit(0)
         except SystemExit:
             os._exit(0)
-

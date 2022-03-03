@@ -1,9 +1,10 @@
-import time
 import datetime
-import requests
 import json
-import sparql
+import time
 
+import requests
+
+import sparql
 
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
@@ -53,37 +54,33 @@ def get_records(query):
     print("Requesting data")
     raw_records = sparql.request(ENDPOINT, query)
     print("Request done")
-    records = []
-    for record in raw_records:
-        records += [
-            {
-                "id": sparql.format_value(record, "record"),
-                "file": sparql.format_value(record, "file"),
-                "date": sparql.format_value(record, "date"),
-                "transcription": sparql.format_value(record, "transcription"),
-                "qualifier": sparql.format_value(record, "qualifier"),
-                "user": sparql.format_value(record, "linkeduser"),
-                "speaker": {
-                    "id": sparql.format_value(record, "speaker"),
-                    "name": sparql.format_value(record, "speakerLabel"),
-                    "gender": sparql.format_value(record, "gender"),
-                    "residence": sparql.format_value(record, "residence"),
-                },
-                "links": {
-                    "wikidata": sparql.format_value(record, "wikidataId"),
-                    "lexeme": sparql.format_value(record, "lexemeId"),
-                    "wikipedia": sparql.format_value(record, "wikipediaTitle"),
-                    "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
-                },
-                "language": {
-                    "iso": sparql.format_value(record, "languageIso"),
-                    "qid": sparql.format_value(record, "languageQid"),
-                    "wm": sparql.format_value(record, "languageWMCode"),
-                    "learning": sparql.format_value(record, "learningPlace"),
-                    "level": sparql.format_value(record, "languageLevel"),
-                },
-            }
-        ]
+    records = [{
+        "id": sparql.format_value(record, "record"),
+        "file": sparql.format_value(record, "file"),
+        "date": sparql.format_value(record, "date"),
+        "transcription": sparql.format_value(record, "transcription"),
+        "qualifier": sparql.format_value(record, "qualifier"),
+        "user": sparql.format_value(record, "linkeduser"),
+        "speaker": {
+            "id": sparql.format_value(record, "speaker"),
+            "name": sparql.format_value(record, "speakerLabel"),
+            "gender": sparql.format_value(record, "gender"),
+            "residence": sparql.format_value(record, "residence"),
+        },
+        "links": {
+            "wikidata": sparql.format_value(record, "wikidataId"),
+            "lexeme": sparql.format_value(record, "lexemeId"),
+            "wikipedia": sparql.format_value(record, "wikipediaTitle"),
+            "wiktionary": sparql.format_value(record, "wiktionaryEntry"),
+        },
+        "language": {
+            "iso": sparql.format_value(record, "languageIso"),
+            "qid": sparql.format_value(record, "languageQid"),
+            "wm": sparql.format_value(record, "languageWMCode"),
+            "learning": sparql.format_value(record, "learningPlace"),
+            "level": sparql.format_value(record, "languageLevel"),
+        },
+    } for record in raw_records]
     print(f"Found {len(records)} records.")
     return records
 
@@ -142,7 +139,7 @@ def simple_mode(args, supported_wikis):
     filters = ""
     if args.item is not None:
         filters = (
-            "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
+                "VALUES ?record {entity:" + " entity:".join(args.item.split(",")) + "}."
         )
     else:
         if args.startdate is not None:
@@ -152,7 +149,7 @@ def simple_mode(args, supported_wikis):
         if args.user is not None:
             filters += 'FILTER( ?linkeduser = "' + args.user + '" ).'
         if args.lang is not None:
-            filters += "BIND( entity:" + args.lang + " as ?language )."
+            filters += f"BIND( entity:{args.lang} as ?language )."
         elif args.langiso is not None:
             filters += 'FILTER( ?languageIso = "' + args.langiso + '" ).'
         elif args.langwm is not None:
@@ -165,17 +162,15 @@ def simple_mode(args, supported_wikis):
     for dbname in supported_wikis:
         records = supported_wikis[dbname].prepare(records)
 
-    # Try to reuse each listed records on each supported wikis
-    counter = 0
     total = len(records)
-    for record in records:
+    for counter, record in enumerate(records, start=1):
         for dbname in supported_wikis:
             if supported_wikis[dbname].execute(record):
                 time.sleep(1)
-        counter += 1
         if counter % 10 == 0:
             print(f"[{counter}/{total}]")
     # TODO: better handling of the KeyboardInterrupt
-    # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin, nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
+    # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin,
+    #  nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
 
     return [record["id"] for record in records]

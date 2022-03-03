@@ -4,12 +4,13 @@
 # Date: 11 June 2018
 # License: GNU GPL v2+
 
-import requests
 import json
-import urllib.parse
-import backoff
 import re
 import time
+import urllib.parse
+
+import backoff
+import requests
 
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 # Keep both of these below as "http" : that's what's returned by the SPARQL requests
