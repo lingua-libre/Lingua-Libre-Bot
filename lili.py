@@ -10,10 +10,10 @@ ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"
 BASEQUERY = """
 SELECT DISTINCT
-    ?record ?file ?speaker ?speakerLabel ?date ?transcription
+    ?record ?file ?speaker ?date ?transcription
     ?qualifier ?wikidataId ?lexemeId ?wikipediaTitle ?wiktionaryEntry
     ?languageIso ?languageQid ?languageWMCode ?linkeduser
-    ?gender ?residence ?language ?learningPlace ?languageLevel
+    ?residence ?language ?learningPlace ?languageLevel
 WHERE {
   ?record prop:P2 entity:Q2 .
   ?record prop:P3 ?file .
@@ -32,7 +32,6 @@ WHERE {
   OPTIONAL { ?language prop:P17 ?languageWMCode . }
 
   ?speaker prop:P11 ?linkeduser .
-  OPTIONAL { ?speaker prop:P8 ?gender . }
   OPTIONAL { ?speaker prop:P14 ?residence . }
 
   ?speaker llp:P4 ?speakerLanguagesStatement .
@@ -61,12 +60,7 @@ def get_records(query):
         "transcription": sparql.format_value(record, "transcription"),
         "qualifier": sparql.format_value(record, "qualifier"),
         "user": sparql.format_value(record, "linkeduser"),
-        "speaker": {
-            "id": sparql.format_value(record, "speaker"),
-            "name": sparql.format_value(record, "speakerLabel"),
-            "gender": sparql.format_value(record, "gender"),
-            "residence": sparql.format_value(record, "residence"),
-        },
+        "speakerResidence": sparql.format_value(record, "residence"),
         "links": {
             "wikidata": sparql.format_value(record, "wikidataId"),
             "lexeme": sparql.format_value(record, "lexemeId"),

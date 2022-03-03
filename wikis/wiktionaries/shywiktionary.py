@@ -77,8 +77,8 @@ class ShyWiktionary(Wiktionary):
         for record in records:
             if record["language"]["learning"] is not None:
                 locations.add(record["language"]["learning"])
-            elif record["speaker"]["residence"] is not None:
-                locations.add(record["speaker"]["residence"])
+            elif record["speakerResidence"] is not None:
+                locations.add(record["speakerResidence"])
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
@@ -134,7 +134,7 @@ class ShyWiktionary(Wiktionary):
             pronunciation_section = self.__create_pronunciation_section(language_section)
 
         # Add the pronunciation file to the pronunciation section
-        location = record["language"]["learning"] or record["speaker"]["residence"]
+        location = record["language"]["learning"] or record["speakerResidence"]
 
         self.__append_file(
             pronunciation_section,

@@ -85,8 +85,8 @@ class OcWiktionary(Wiktionary):
         for record in records:
             if record["language"]["learning"] is not None:
                 locations.add(record["language"]["learning"])
-            elif record["speaker"]["residence"] is not None:
-                locations.add(record["speaker"]["residence"])
+            elif record["speakerResidence"] is not None:
+                locations.add(record["speakerResidence"])
 
         self.location_map = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
@@ -164,7 +164,7 @@ class OcWiktionary(Wiktionary):
             )
 
         learning_or_residence = (
-                record["language"]["learning"] or record["speaker"]["residence"]
+                record["language"]["learning"] or record["speakerResidence"]
         )
 
         loccode = ""
