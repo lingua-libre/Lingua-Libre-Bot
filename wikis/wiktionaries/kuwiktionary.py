@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 # License: GNU GPL v2+
 
+# NOTE:
+# python3 llbot.py --wiki kuwiktionary --dryrun simple --langwm ku --item Q379244
+# page pour tester l'ajout de section « pron »: porbirr (Q372968)
+# page contenant déjà une section « pron » : gûz (Q379244)
+
 import re
 from typing import List
 
@@ -9,45 +14,27 @@ import wikitextparser as wtp
 
 import sparql
 from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
+from wikis.wiktionary import Wiktionary, safe_append_text
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
+SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
-EMPTY_PRONUNCIATION_SECTION = "\n==== {{S|Alaɣi}} ====\n$1"
-PRONUNCIATION_LINE = "\n* {{écouter|$3||lang=$2|audio=$1}}"
+EMPTY_PRONUNCIATION_SECTION = "=== Bilêvkirin ===\n$1"
+PRONUNCIATION_LINE = "\n* {{deng|$2|$1|Deng|dever=$3}}\n"
 
-# To be sure not to miss any title, they are normalized during comparisons;
-# those listed bellow must thereby be in lower case and without any space
-FOLLOWING_SECTIONS = [
-    "{{s|iliɣen}}",
-    "====Cuf====",
-]
-
-LANGUAGE_QUERY = """
-SELECT ?item ?code ?itemLabel
-WHERE {
-    ?item wdt:P305 ?code.
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, fr" . }
-}
-"""
+LANGUAGE_QUERY = "SELECT ?item ?code WHERE { ?item wdt:P305 ?code. }"
 LOCATION_QUERY = """
 SELECT ?location ?locationLabel ?countryLabel
 WHERE {
   ?location wdt:P17 ?country.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "shy, shy-latn, fr" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "ku,en" . }
   VALUES ?location { wd:$1 }
 }
 """
 
-BOTTOM_REGEX = re.compile(
-    r"(?:\s*(?:\[\[(?:Category|Taggayt):[^]]+]])?)*$",
-    re.IGNORECASE,
-)
 
-
-class ShyWiktionary(Wiktionary):
+class KuWiktionary(Wiktionary):
 
     def __init__(self, user: str, password: str) -> None:
         """
@@ -55,16 +42,17 @@ class ShyWiktionary(Wiktionary):
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "shy", SUMMARY)
+        super().__init__(user, password, "ku", SUMMARY)
 
     """
     Public methods
     """
 
-    # Prepare the records to be added on the Shawiya Wiktionary:
-    # - Fetch the needed language code map (Qid -> BCP 47, used by shywiktionary)
-    # - Get the labels of the speaker's location in Shawiya
+    # Prepare the records to be added on the Kurdish Wiktionary:
+    # - Fetch the needed language code map (Qid -> BCP 47, used by kuwiktionary)
+    # - Get the labels of the speaker's location in Kurdish
     def prepare(self, records: List[Record]) -> List[Record]:
+
         # Get BCP 47 language code map
         self.language_code_map = {}
         raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
@@ -74,54 +62,50 @@ class ShyWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-            # Extract all different locations
+        # Extract all different locations
         locations = set()
         for record in records:
             if record.language["learning"] is not None:
                 locations.add(record.language["learning"])
-            elif record.speaker_residence is not None:
+            if record.speaker_residence is not None:
                 locations.add(record.speaker_residence)
 
+        # Prepare two location maps
+        # One that contains both the city and the country (for all languages but Kurdish)
+        # One that contains only the city (only for the Kurdish language)
         self.location_map = {}
+        self.location_map_with_country = {}
         raw_location_map = sparql.request(SPARQL_ENDPOINT,
                                           LOCATION_QUERY.replace("$1", " wd:".join(locations))
                                           )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
-            self.location_map[sparql.format_value(line, "location")] = country
+            self.location_map[sparql.format_value(line, "location")] = location
+            self.location_map_with_country[sparql.format_value(line, "location")] = country
             if country != location:
-                self.location_map[sparql.format_value(line, "location")] += f" ({location})"
+                self.location_map_with_country[sparql.format_value(line, "location")] += f" ({location})"
 
         return records
 
-    def execute(self, record) -> bool:
-        """
-        Try to use the given record on the Shawiya Wiktionary
-        @param record:
-        @return:
-        """
-        # Normalize the record using shywiktionary's titles conventions
-        transcription = replace_apostrophe(record.transcription)
+    # Try to use the given record on the Kurdish Wiktionary
+    def execute(self, record: Record) -> bool:
+        transcription = record.transcription
 
         # Fetch the content of the page having the transcription for title
-        (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record.file
-        )
+        (is_already_present, wikicode, basetimestamp) = self.get_entry(transcription, record.file)
 
-        # Whether there is no entry for this record on shywiktionary
+        # Whether there is no entry for this record on kuwiktionary
         if not wikicode:
             return False
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(f"{record.id}//{transcription}: already on shywiktionary")
+            print(f'{record.id}//{transcription}: already on kuwiktionary')
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.__get_language_section(
-            wikicode, record.language["qid"]
-        )
+        language_section = self.__get_language_section(wikicode, record.language["qid"])
 
         # Whether there is no section for the current language
         if language_section is None:
@@ -135,14 +119,17 @@ class ShyWiktionary(Wiktionary):
         if pronunciation_section is None:
             pronunciation_section = self.__create_pronunciation_section(language_section)
 
-        # Add the pronunciation file to the pronunciation section
+        # Choose the location to be displayed with the following order
+        # 1) place of learning
+        # 2) place of residence
         location = record.language["learning"] or record.speaker_residence
 
+        # Add the pronunciation file to the pronunciation subsection
         self.__append_file(
             pronunciation_section,
             record.file,
             record.language["qid"],
-            location,
+            location
         )
 
         # Save the result
@@ -150,24 +137,20 @@ class ShyWiktionary(Wiktionary):
         try:
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
+            # If we got an editconflict, just restart from the beginning
             if "editconflict" in str(e):
                 self.execute(record)
             else:
                 raise e
+
         if result:
             print(
-                f'{record.id}//{transcription}: added to shywiktionary - https://shy.wiktionary.org/wiki/{transcription}'
-            )
+                f'{record.id}//{transcription}: added to kuwiktionary - https://ku.wiktionary.org/wiki/{transcription}')
 
         return result
 
+    # Try to extract the language section
     def __get_language_section(self, wikicode, language_qid):
-        """
-        Try to extract the language section
-        @param wikicode:
-        @param language_qid:
-        @return:
-        """
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
             return None
@@ -179,85 +162,84 @@ class ShyWiktionary(Wiktionary):
             if section.title is None:
                 continue
 
-            if section.title.replace(" ", "").lower() == "{{langue|" + lang + "}}":
+            if section.title.replace(" ", "").lower() == "{{ziman|" + lang + "}}":
                 return section
 
-                # If we arrive here, it means that there is no section for
-                # the record's language
+        # If we arrive here, it means that there is no section for
+        # the record's language
         return None
 
+    # Try to extract the pronunciation subsection
     def __get_pronunciation_section(self, wikicode):
-        """
-        Try to extract the pronunciation subsection
-        @param wikicode:
-        @return:
-        """
         for section in wikicode.sections:
             if section.title is None:
                 continue
 
-            if section.title.replace(" ", "").lower() == "{{s|alaɣi}}":
+            if section.title.replace(" ", "").lower() == "bilêvkirin":
                 return section
 
         return None
 
+    # Create a pronunciation subsection
     def __create_pronunciation_section(self, wikicode):
-        """
-        Create a pronunciation subsection
-        @param wikicode:
-        @return:
-        """
-        # The sections order is fixed, etymology, word type (and it's many
-        # subsections, pronunciation, anagram, see also and references)
-        # Travel across the sections until we find one which comes after
-        # the pronunciation section
-        prev_section = wikicode.sections[0]
+        # The pronunciation section is the first one of the language section
+        # It comes just after "=={{ziman|qqq}}=="
+        section = None
         for section in wikicode.sections:
             if section.title is None:
                 continue
-            if section.title.replace(" ", "").lower() in FOLLOWING_SECTIONS:
-                break
-            prev_section = section
 
-        # Append an empty pronunication section to the last section which
-        # is not in the following sections list
-        prev_section.contents = safe_append_text(
-            prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
+            # Search for the language section
+            if re.search(r'{{ziman\|[a-z]+}}', section.title.replace(" ", "")):
+                break
+
+        if not section:
+            return
+        lang_section = section
+
+        # Add a new line before the pronunciation section only
+        # if there is no other section
+        section_content = wtp.parse(wikicode.sections[1].contents)
+        new_section = EMPTY_PRONUNCIATION_SECTION
+        if len(section_content.sections) < 2:
+            new_section = new_section.replace("=== Bilêvkirin", "\n=== Bilêvkirin")
+
+        # Append an empty pronunciation section just after the language section
+        lang_section.contents = safe_append_text(
+            lang_section.contents, new_section, re.compile(r"===")
         )
 
         return self.__get_pronunciation_section(wikicode)
 
+    # Add the audio template to the pronunciation section
     def __append_file(self, wikicode, filename, language_qid, location_qid):
-        """
-        Add the audio template to the pronunciation section
-        @param wikicode:
-        @param filename:
-        @param language_qid:
-        @param location_qid:
-        """
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         location = ""
-        if location_qid in self.location_map:
+        if (language_qid == "Q36368" and  # Kurdish language on Wikidata
+                location_qid in self.location_map):
             location = self.location_map[location_qid]
+
+        if (language_qid != "Q36368" and
+                location_qid in self.location_map_with_country):
+            location = self.location_map_with_country[location_qid]
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
             language_qid]).replace("$3", location)
+        # Add new lines if there are sections after
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
         section_content.sections[0].contents = safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
-            BOTTOM_REGEX
+            re.compile(r"===")
         )
-
-        # Remove the {{ébauche-pron-audio|fr}} if there was one
-        # TO REMOVE: section_content = re.sub("\*?\s*\{\{ébauche-pron-audio\|fr\}\}\s*\n", "", str(section_content))
 
         wikicode.sections[1].contents = str(section_content)
 
         # Remove the ugly hack, see comment line 17
-        wikicode.sections[1].contents = wikicode.sections[1].contents.replace(
-            "$1\n", ""
-        )
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("$1\n", "")
+
+        # Remove unneeded blank lines
+        wikicode.sections[1].contents = wikicode.sections[1].contents.replace("\n\n", "")

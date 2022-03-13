@@ -1,22 +1,19 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Antoine "0x010C" Lamielle
-# Date: 9 June 2018
 # License: GNU GPL v2+
 
-import configparser
 import argparse
+import configparser
 import os
 import sys
 
 import lili
-
-from wikis.wikidata.wikidata import Wikidata
+from wikis.wikidata import Wikidata, Lexemes
 from wikis.wiktionaries.frwiktionary import FrWiktionary
+from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.orwiktionary import OrWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
-from wikis.wikidata.lexemes import Lexemes
 
 config = configparser.ConfigParser()
 res = config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
@@ -24,8 +21,7 @@ if len(res) == 0:
     raise OSError("config.ini does not exist")
 
 
-# Main
-def main():
+def main() -> None:
     # Create an object for each supported wiki
     user = config.get("wiki", "user")
     password = config.get("wiki", "password")
@@ -120,8 +116,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print('\nStopping Lingua Libre Bot')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
-
+        sys.exit(0)
