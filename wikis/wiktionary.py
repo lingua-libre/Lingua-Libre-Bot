@@ -41,7 +41,7 @@ def safe_append_text(content, text, pattern: re.Pattern):
 
 class Wiktionary(WikiFamily, abc.ABC):
 
-    def __init__(self, user: str, password: str, language_domain: str, summary: str) -> None:
+    def __init__(self, user: str, password: str, language_domain: str, summary: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
@@ -49,7 +49,7 @@ class Wiktionary(WikiFamily, abc.ABC):
         @param language_domain: The "language" of the wiki (e.g. 'fr', 'en', etc.)
         @param summary: The edit summary
         """
-        super().__init__(user, password, "wiktionary", language_domain)
+        super().__init__(user, password, "wiktionary", language_domain, dry_run)
         self.summary = summary
 
     # Fetch the contents of the given Wiktionary entry,

@@ -49,13 +49,13 @@ BOTTOM_REGEX = re.compile(
 
 class ShyWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "shy", SUMMARY)
+        super().__init__(user, password, "shy", SUMMARY, dry_run)
 
     """
     Public methods

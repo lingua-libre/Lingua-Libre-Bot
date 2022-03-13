@@ -17,7 +17,7 @@ class WikiFamily(abc.ABC):
     (such as Wiktionary for the Wiktionaries).
     """
 
-    def __init__(self, user, password, wiki_family: str, language_domain: str):
+    def __init__(self, user, password, wiki_family: str, language_domain: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
@@ -26,16 +26,8 @@ class WikiFamily(abc.ABC):
         @param language_domain: The "language" of the wiki (e.g. 'fr', 'en', etc.)
         """
         self.API_ENDPOINT = f"https://{language_domain}.{wiki_family}.org/w/api.php"
-        self.api = pywiki.Pywiki(user, password, self.API_ENDPOINT, "user")
+        self.api = pywiki.Pywiki(user, password, self.API_ENDPOINT, "user", dry_run)
         self.language_domain = language_domain
-
-    def set_dry_run(self):
-        """
-        Enables the "dry run" mode.
-        The bot will compute changes without applying them to the pages, and will print out the page content or the
-        request it will have generated.
-        """
-        self.api.set_dry_run(True)
 
     def prepare(self, records: List[Record]) -> List[Record]:
         return records

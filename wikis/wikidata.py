@@ -21,13 +21,13 @@ def remove_brackets(title):
 
 
 class AbcWikidata(WikiFamily, abc.ABC):
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "wikidata", "www")
+        super().__init__(user, password, "wikidata", "www", dry_run)
 
     @abc.abstractmethod
     def _get_wiki_name(self) -> str:

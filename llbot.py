@@ -6,6 +6,7 @@ import argparse
 import configparser
 import os
 import sys
+from typing import Iterable
 
 import lili
 from wikis.wikidata import Wikidata, Lexemes
@@ -21,34 +22,48 @@ if len(res) == 0:
 
 
 def main() -> None:
-    # Create an object for each supported wiki
-    user = config.get("wiki", "user")
-    password = config.get("wiki", "password")
-    supported_wikis = {
-        "wikidatawiki": Wikidata(user, password),
-        "lexemes": Lexemes(user, password),
-        "frwiktionary": FrWiktionary(user, password),
-        "kuwiktionary": KuWiktionary(user, password),
-        "ocwiktionary": OcWiktionary(user, password),
-        "shywiktionary": ShyWiktionary(user, password),
+    wiki_classes = {
+        "wikidatawiki": Wikidata,
+        "lexemes": Lexemes,
+        "frwiktionary": FrWiktionary,
+        "kuwiktionary": KuWiktionary,
+        "ocwiktionary": OcWiktionary,
+        "shywiktionary": ShyWiktionary,
     }
 
-    # Declare the command-line arguments
+    parser = create_parser(wiki_classes.keys())
+    args = parser.parse_args()
+
+    if args.wiki is not None:
+        wiki_classes = {args.wiki: wiki_classes[args.wiki]}
+
+    user = config.get("wiki", "user")
+    password = config.get("wiki", "password")
+    wikis = {
+        wiki_name: wiki_class(user, password, bool(args.dryrun))
+        for wiki_name, wiki_class in wiki_classes.items()
+    }
+
+    items = args.func(args, wikis)
+    print(len(items))
+
+
+def create_parser(supported_wikis: Iterable[str]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Reuse records made on Lingua Libre on some wikis."
     )
     parser.add_argument(
         "--wiki",
         help="run only on the selected wiki",
-        choices=list(supported_wikis.keys()),
+        choices=list(supported_wikis),
     )
     parser.add_argument(
         "--dryrun",
         action='store_true',
         help="show the result without actually doing any edit"
     )
-    subparsers = parser.add_subparsers(title="Execution modes")
-
+    subparsers = parser.add_subparsers(title="Execution modes", dest="mode")
+    subparsers.required = True
     simpleparser = subparsers.add_parser(
         "simple", help="Run llbot on (a subset of) all items"
     )
@@ -70,7 +85,6 @@ def main() -> None:
         "--langwm",
         help="run only on records from the given language, identified by its wikimedia code",
     )
-
     liveparser = subparsers.add_parser(
         "live", help="Run llbot in (hardly) real time based on Recent Changes"
     )
@@ -87,26 +101,7 @@ def main() -> None:
         type=int,
         default=0,
     )
-
-    # Parse the command-line arguments
-    args = parser.parse_args()
-
-    # Make sure a mode has been selected
-    if 'func' not in args:
-        parser.error("Please provide a mode (either \"simple\" or \"live\")")
-
-    # Filter the wikis depending on the fetched arguments
-    if args.wiki is not None:
-        tmp = supported_wikis[args.wiki]
-        supported_wikis = {args.wiki: tmp}
-
-    if args.dryrun:
-        for dbname in supported_wikis:
-            supported_wikis[dbname].set_dry_run()
-
-    # Start the bot in the selected mode (simple or live)
-    items = args.func(args, supported_wikis)
-    print(len(items))
+    return parser
 
 
 if __name__ == "__main__":
