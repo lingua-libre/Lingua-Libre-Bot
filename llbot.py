@@ -33,6 +33,7 @@ def main():
         "wikidatawiki": Wikidata(user, password),
         "lexemes": Lexemes(user, password),
         "frwiktionary": FrWiktionary(user, password),
+        "kuwiktionary": KuWiktionary(user, password),
         "ocwiktionary": OcWiktionary(user, password),
         "orwiktionary": OrWiktionary(user, password),
         "shywiktionary": ShyWiktionary(user, password),
