@@ -6,13 +6,16 @@
 
 import abc
 import re
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Set
 
 import wikitextparser as wtp
 
+import sparql
+from record import Record
 from wikis.wikifamily import WikiFamily
 
 SANITIZE_REGEX = re.compile(r"== +\n")
+SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 
 def replace_apostrophe(text: str) -> str:
@@ -37,6 +40,19 @@ def safe_append_text(content, text, pattern: re.Pattern):
     search = pattern.search(content)
     index = search.start() if search else len(content)
     return content[:index] + text + content[index:]
+
+
+def get_locations_from_records(query: str, records: List[Record]) -> Set[str]:
+    locations = set()
+    for record in records:
+        if record.language["learning"] is not None:
+            locations.add(record.language["learning"])
+        if record.speaker_residence is not None:
+            locations.add(record.speaker_residence)
+
+    return sparql.request(SPARQL_ENDPOINT,
+                          query.replace("$1", " wd:".join(locations))
+                          )
 
 
 class Wiktionary(WikiFamily, abc.ABC):

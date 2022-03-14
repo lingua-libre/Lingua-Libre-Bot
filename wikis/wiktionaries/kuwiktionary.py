@@ -14,7 +14,7 @@ import wikitextparser as wtp
 
 import sparql
 from record import Record
-from wikis.wiktionary import Wiktionary, safe_append_text
+from wikis.wiktionary import Wiktionary, safe_append_text, get_locations_from_records
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
@@ -62,22 +62,10 @@ class KuWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-        # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            if record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
-        # Prepare two location maps
-        # One that contains both the city and the country (for all languages but Kurdish)
-        # One that contains only the city (only for the Kurdish language)
         self.location_map = {}
         self.location_map_with_country = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")

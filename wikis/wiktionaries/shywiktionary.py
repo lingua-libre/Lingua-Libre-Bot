@@ -9,7 +9,7 @@ import wikitextparser as wtp
 
 import sparql
 from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
@@ -74,18 +74,9 @@ class ShyWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-            # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            elif record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
         self.location_map = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
