@@ -9,6 +9,8 @@ from typing import List, Dict
 from record import Record
 from wikis.wikifamily import WikiFamily
 
+MAX_NUMBER_OF_IDS_PER_REQUEST = 50
+
 PRONUNCIATION_PROPERTY = "P443"
 LANG_PROPERTY = "P407"
 REFURL_PROPERTY = "P854"
@@ -142,9 +144,9 @@ class Wikidata(AbcWikidata):
         while len(qids) > 0:
             redirects = {
                 **redirects,
-                **self.__resolve_redirects(qids[:50])
+                **self.__resolve_redirects(qids[:MAX_NUMBER_OF_IDS_PER_REQUEST])
             }
-            qids = qids[50:]
+            qids = qids[MAX_NUMBER_OF_IDS_PER_REQUEST:]
 
         for record in records:
             if record.links["wikidata"] is None:
@@ -171,9 +173,9 @@ class Wikidata(AbcWikidata):
             while len(links[lang]) > 0:
                 connections = {
                     **connections,
-                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:50], lang),
+                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:MAX_NUMBER_OF_IDS_PER_REQUEST], lang),
                 }
-                links[lang] = links[lang][50:]
+                links[lang] = links[lang][MAX_NUMBER_OF_IDS_PER_REQUEST:]
 
         for record in records:
             if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
