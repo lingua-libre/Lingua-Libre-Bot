@@ -50,9 +50,7 @@ def get_locations_from_records(query: str, records: List[Record]) -> Set[str]:
         if record.speaker_residence is not None:
             locations.add(record.speaker_residence)
 
-    return sparql.request(SPARQL_ENDPOINT,
-                          query.replace("$1", " wd:".join(locations))
-                          )
+    return sparql.request(SPARQL_ENDPOINT, query.replace("$1", " wd:".join(locations)))
 
 
 class Wiktionary(WikiFamily, abc.ABC):

@@ -160,4 +160,4 @@ def simple_mode(args, supported_wikis):
     # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin,
     #  nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
 
-    return [record["id"] for record in records]
+    return [record.id for record in records]

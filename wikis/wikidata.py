@@ -144,7 +144,7 @@ class Wikidata(AbcWikidata):
         while len(qids) > 0:
             redirects = {
                 **redirects,
-                **self.__resolve_redirects(qids[:MAX_NUMBER_OF_IDS_PER_REQUEST])
+                **self.__search_redirects(qids[:MAX_NUMBER_OF_IDS_PER_REQUEST])
             }
             qids = qids[MAX_NUMBER_OF_IDS_PER_REQUEST:]
 
@@ -185,11 +185,11 @@ class Wikidata(AbcWikidata):
 
         return records
 
-    def __resolve_redirects(self, qids: List[str]) -> Dict[str, str]:
+    def __search_redirects(self, qids: List[str]) -> Dict[str, str]:
         """
-        Find out if the given items are redirects or not
-        @param qids:
-        @return:
+        Associates to each qid the target of the redirection, if relevant.
+        @param qids: a list of qids for which a redirection is searched
+        @return: a dictionary of the redirections in which keys are source qids and values are target qids
         """
         response = self.api.request(
             {
