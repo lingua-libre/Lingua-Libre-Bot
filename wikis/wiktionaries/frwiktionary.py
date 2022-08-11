@@ -12,7 +12,7 @@ from record import Record
 from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
+SUMMARY = "Ajout d'un fichier audio de prononciation depuis [[Lingua Libre]]"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
