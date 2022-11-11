@@ -16,7 +16,7 @@ from wikis.wiktionaries.ocwiktionary import OcWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
 
 config = configparser.ConfigParser()
-res = config.read(os.path.dirname(os.path.realpath(__file__)) + "/config.ini")
+res = config.read(f"{os.path.dirname(os.path.realpath(__file__))}/config.ini")
 if len(res) == 0:
     raise OSError("config.ini does not exist")
 

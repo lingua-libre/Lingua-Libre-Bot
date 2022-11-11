@@ -8,10 +8,11 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
+from sparql import SPARQL_ENDPOINT
+
 from record import Record
 from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content

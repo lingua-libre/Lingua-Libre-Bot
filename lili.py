@@ -97,7 +97,8 @@ def live_mode(args, supported_wikis):
         )
         data = json.loads(r.text)["query"]["recentchanges"]
 
-        prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        prev_timestamp = f"{datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()}Z"
+
         print("Current time:", prev_timestamp)
 
         for rc in data:

@@ -11,11 +11,12 @@ from typing import Tuple, Optional, List, Set
 import wikitextparser as wtp
 
 import sparql
+from sparql import SPARQL_ENDPOINT
+
 from record import Record
 from wikis.wikifamily import WikiFamily
 
 SANITIZE_REGEX = re.compile(r"== +\n")
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 
 def replace_apostrophe(text: str) -> str:

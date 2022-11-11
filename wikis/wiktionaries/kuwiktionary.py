@@ -13,10 +13,13 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
-from record import Record
-from wikis.wiktionary import Wiktionary, safe_append_text, get_locations_from_records
+from sparql import SPARQL_ENDPOINT
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+from record import Record
+from wikis.wiktionary import Wiktionary, safe_append_text, get_locations_from_records, get_pronunciation_section
+
+PRONUNCIATION_SECTION_NAME = "bilêvkirin"
+
 SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -157,17 +160,6 @@ class KuWiktionary(Wiktionary):
         # the record's language
         return None
 
-    # Try to extract the pronunciation subsection
-    def __get_pronunciation_section(self, wikicode):
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "bilêvkirin":
-                return section
-
-        return None
-
     # Create a pronunciation subsection
     def __create_pronunciation_section(self, wikicode):
         # The pronunciation section is the first one of the language section
@@ -197,7 +189,7 @@ class KuWiktionary(Wiktionary):
             lang_section.contents, new_section, re.compile(r"===")
         )
 
-        return self.__get_pronunciation_section(wikicode)
+        return get_pronunciation_section(wikicode, PRONUNCIATION_SECTION_NAME)
 
     # Add the audio template to the pronunciation section
     def __append_file(self, wikicode, filename, language_qid, location_qid):

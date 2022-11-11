@@ -3,15 +3,13 @@
 # License: GNU GPL v2+
 
 import re
-from typing import List, Set
 
 import wikitextparser as wtp
 
 import sparql
-from record import Record
+from sparql import SPARQL_ENDPOINT
 from wikis.wiktionary import Wiktionary, replace_apostrophe, get_locations_from_records
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -49,8 +47,6 @@ BOTTOM_REGEX = re.compile(
     r"(?:\s*(?:\[\[(?:Category|Categoria):[^]]+]]|{{clé de tri\|[^}]+}})?)*$",
     re.IGNORECASE,
 )
-
-
 
 
 class OcWiktionary(Wiktionary):
@@ -162,9 +158,8 @@ class OcWiktionary(Wiktionary):
         if learning_or_residence:
 
             self.location_map = {}
-            raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                              LOCATION_QUERY.replace("$1", " wd:" + learning_or_residence)
-                                              )
+            raw_location_map = sparql.request(SPARQL_ENDPOINT, LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
+
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")
                 location = sparql.format_value(raw_location_map[0], "locationLabel")
