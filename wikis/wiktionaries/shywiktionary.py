@@ -11,7 +11,8 @@ import sparql
 from sparql import SPARQL_ENDPOINT
 
 from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records, \
+    get_pronunciation_section
 
 SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
 
@@ -121,7 +122,7 @@ class ShyWiktionary(Wiktionary):
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.__get_pronunciation_section(language_section)
+        pronunciation_section = get_pronunciation_section(language_section, "{{s|alaɣi}}")
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
@@ -178,21 +179,6 @@ class ShyWiktionary(Wiktionary):
                 # the record's language
         return None
 
-    def __get_pronunciation_section(self, wikicode):
-        """
-        Try to extract the pronunciation subsection
-        @param wikicode:
-        @return:
-        """
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "{{s|alaɣi}}":
-                return section
-
-        return None
-
     def __create_pronunciation_section(self, wikicode):
         """
         Create a pronunciation subsection
@@ -217,7 +203,7 @@ class ShyWiktionary(Wiktionary):
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
-        return self.__get_pronunciation_section(wikicode)
+        return get_pronunciation_section(wikicode, "{{s|alaɣi}}")
 
     def __append_file(self, wikicode, filename, language_qid, location_qid):
         """

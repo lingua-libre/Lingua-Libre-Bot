@@ -54,6 +54,23 @@ def get_locations_from_records(query: str, records: List[Record]) -> Set[str]:
     return sparql.request(SPARQL_ENDPOINT, query.replace("$1", " wd:".join(locations)))
 
 
+def get_pronunciation_section(wikicode: wtp.WikiText, section_title: str) -> Optional[wtp.Section]:
+    """
+    Try to extract the pronunciation subsection
+    @param wikicode:
+    @param section_title:
+    @return:
+    """
+    for section in wikicode.sections:
+        if section.title is None:
+            continue
+
+        if section.title.replace(" ", "").lower() == section_title.lower():
+            return section
+
+    return None
+
+
 class Wiktionary(WikiFamily, abc.ABC):
 
     def __init__(self, user: str, password: str, language_domain: str, summary: str, dry_run: bool) -> None:

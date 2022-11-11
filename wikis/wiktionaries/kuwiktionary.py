@@ -104,7 +104,7 @@ class KuWiktionary(Wiktionary):
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.__get_pronunciation_section(language_section)
+        pronunciation_section = get_pronunciation_section(language_section, PRONUNCIATION_SECTION_NAME)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
