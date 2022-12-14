@@ -8,14 +8,12 @@
 # page contenant déjà une section « pron » : gûz (Q379244)
 
 import re
-from typing import List
 
 import wikitextparser as wtp
 
 import sparql
+from request.record import Record
 from sparql import SPARQL_ENDPOINT
-
-from record import Record
 from wikis.wiktionary import Wiktionary, safe_append_text, get_locations_from_records, get_pronunciation_section
 
 PRONUNCIATION_SECTION_NAME = "bilêvkirin"
@@ -35,6 +33,7 @@ WHERE {
   VALUES ?location { wd:$1 }
 }
 """
+BOTTOM_REGEX = re.compile(r"===")
 
 
 class KuWiktionary(Wiktionary):
@@ -45,28 +44,10 @@ class KuWiktionary(Wiktionary):
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "ku", SUMMARY, dry_run)
+        super().__init__(user, password, "ku", SUMMARY, dry_run, LOCATION_QUERY)
 
-    """
-    Public methods
-    """
-
-    # Prepare the records to be added on the Kurdish Wiktionary:
-    # - Fetch the needed language code map (Qid -> BCP 47, used by kuwiktionary)
-    # - Get the labels of the speaker's location in Kurdish
-    def prepare(self, records: List[Record]) -> List[Record]:
-
-        # Get BCP 47 language code map
-        self.language_code_map = {}
-        raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
-
-        for line in raw_language_code_map:
-            self.language_code_map[
-                sparql.format_value(line, "item")
-            ] = sparql.format_value(line, "code")
-
+    def fetch_locations(self, records):
         raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
-
         self.location_map = {}
         self.location_map_with_country = {}
         for line in raw_location_map:
@@ -77,7 +58,13 @@ class KuWiktionary(Wiktionary):
             if country != location:
                 self.location_map_with_country[sparql.format_value(line, "location")] += f" ({location})"
 
-        return records
+    def fetch_language_codes(self):
+        self.language_code_map = {}
+        raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
+        for line in raw_language_code_map:
+            self.language_code_map[
+                sparql.format_value(line, "item")
+            ] = sparql.format_value(line, "code")
 
     # Try to use the given record on the Kurdish Wiktionary
     def execute(self, record: Record) -> bool:
@@ -96,7 +83,7 @@ class KuWiktionary(Wiktionary):
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.__get_language_section(wikicode, record.language["qid"])
+        language_section = self._get_language_section(wikicode, record.language["qid"])
 
         # Whether there is no section for the current language
         if language_section is None:
@@ -123,42 +110,13 @@ class KuWiktionary(Wiktionary):
             location
         )
 
-        # Save the result
-        result = False
-        try:
-            result = self.do_edit(transcription, wikicode, basetimestamp)
-        except Exception as e:
-            # If we got an editconflict, just restart from the beginning
-            if "editconflict" in str(e):
-                self.execute(record)
-            else:
-                raise e
+        return self.save_result(basetimestamp, record, transcription, wikicode)
 
-        if result:
-            print(
-                f'{record.id}//{transcription}: added to kuwiktionary - https://ku.wiktionary.org/wiki/{transcription}')
+    def get_save_message(self, record, transcription):
+        return f'{record.id}//{transcription}: added to kuwiktionary - https://ku.wiktionary.org/wiki/{transcription}'
 
-        return result
-
-    # Try to extract the language section
-    def __get_language_section(self, wikicode, language_qid):
-        # Check if the record's language has a BCP 47 code, stop here if not
-        if language_qid not in self.language_code_map:
-            return None
-
-        lang = self.language_code_map[language_qid]
-
-        # Travel across each sections titles to find the one we want
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "{{ziman|" + lang + "}}":
-                return section
-
-        # If we arrive here, it means that there is no section for
-        # the record's language
-        return None
+    def language_section(self, lang):
+        return "{{ziman|" + lang + "}}"
 
     # Create a pronunciation subsection
     def __create_pronunciation_section(self, wikicode):
@@ -213,7 +171,7 @@ class KuWiktionary(Wiktionary):
         section_content.sections[0].contents = safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
-            re.compile(r"===")
+            BOTTOM_REGEX
         )
 
         wikicode.sections[1].contents = str(section_content)

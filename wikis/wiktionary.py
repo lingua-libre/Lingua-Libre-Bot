@@ -11,10 +11,10 @@ from typing import Tuple, Optional, List, Set
 import wikitextparser as wtp
 
 import sparql
+from request.record import Record
 from sparql import SPARQL_ENDPOINT
-
-from record import Record
 from wikis.wikifamily import WikiFamily
+from abc import abstractmethod
 
 SANITIZE_REGEX = re.compile(r"== +\n")
 
@@ -73,7 +73,8 @@ def get_pronunciation_section(wikicode: wtp.WikiText, section_title: str) -> Opt
 
 class Wiktionary(WikiFamily, abc.ABC):
 
-    def __init__(self, user: str, password: str, language_domain: str, summary: str, dry_run: bool) -> None:
+    def __init__(self, user: str, password: str, language_domain: str, summary: str, dry_run: bool,
+                 location_query) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
@@ -83,6 +84,9 @@ class Wiktionary(WikiFamily, abc.ABC):
         """
         super().__init__(user, password, "wiktionary", language_domain, dry_run)
         self.summary = summary
+        self.language_code_map = {}
+        self.location_map = {}
+        self.location_query = location_query
 
     # Fetch the contents of the given Wiktionary entry,
     # and check by the way whether the file is already in it.
@@ -136,3 +140,71 @@ class Wiktionary(WikiFamily, abc.ABC):
         )
 
         return "edit" in result
+
+    def _get_language_section(self, wikicode, language_qid):
+        """
+        Try to extract the language section
+        @param wikicode:
+        @param language_qid:
+        @return:
+        """
+        # Check if the record's language has a BCP 47 code, stop here if not
+        if language_qid not in self.language_code_map:
+            return None
+
+        lang = self.language_code_map[language_qid]
+
+        # Travel across each sections titles to find the one we want
+        for section in wikicode.sections:
+            if section.title is None:
+                continue
+
+            if section.title.replace(" ", "").lower() == self.language_section(lang):
+                return section
+
+                # If we arrive here, it means that there is no section for
+                # the record's language
+        return None
+
+    def prepare(self, records: List[Record]) -> List[Record]:
+        self.fetch_language_codes()
+        self.fetch_locations(records)
+        return records
+
+    @abstractmethod
+    def language_section(self, lang):
+        ...
+
+    @abstractmethod
+    def fetch_language_codes(self):
+        ...
+
+    def fetch_locations(self, records):
+        raw_location_map = get_locations_from_records(self.location_query, records)
+        self.location_map = {}
+        for line in raw_location_map:
+            country = sparql.format_value(line, "countryLabel")
+            location = sparql.format_value(line, "locationLabel")
+            location_key = sparql.format_value(line, "location")
+            self.location_map[location_key] = self.compute_location_label(country, location)
+
+    @abstractmethod
+    def compute_location_label(self, country, location):
+        ...
+
+    def save_result(self, basetimestamp, record, transcription, wikicode):
+        result = False
+        try:
+            result = self.do_edit(transcription, wikicode, basetimestamp)
+        except Exception as e:
+            if "editconflict" in str(e):
+                self.execute(record)
+            else:
+                raise e
+        if result:
+            print(self.get_save_message(record, transcription))
+        return result
+
+    @abstractmethod
+    def get_save_message(self, record, transcription):
+        ...

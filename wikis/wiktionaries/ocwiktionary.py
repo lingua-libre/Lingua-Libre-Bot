@@ -7,8 +7,9 @@ import re
 import wikitextparser as wtp
 
 import sparql
+from request.record import Record
 from sparql import SPARQL_ENDPOINT
-from wikis.wiktionary import Wiktionary, replace_apostrophe, get_locations_from_records
+from wikis.wiktionary import Wiktionary, replace_apostrophe
 
 SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
 
@@ -57,21 +58,15 @@ class OcWiktionary(Wiktionary):
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "oc", SUMMARY, dry_run)
+        super().__init__(user, password, "oc", SUMMARY, dry_run, LOCATION_QUERY)
 
-    """
-    Public methods
-    """
+    def compute_location_label(self, country, location):
+        return country if country == location else f"{country} ({location})"
 
-    # Prepare the records to be added on the French Wiktionary:
-    # - Fetch the needed language code map (Qid -> BCP 47, used by ocwiktionary)
-    # - Get the labels of the speaker's location in French
-    def prepare(self, records):
-        # Get BCP 47 language code map
+    def fetch_language_codes(self):
         self.language_code_map = {}
         self.language_label_map = {}
         raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
-
         for line in raw_language_code_map:
             self.language_code_map[
                 sparql.format_value(line, "item")
@@ -80,19 +75,7 @@ class OcWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "itemLabel")
 
-        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
-
-        self.location_map = {}
-        for line in raw_location_map:
-            country = sparql.format_value(line, "countryLabel")
-            location = sparql.format_value(line, "locationLabel")
-            self.location_map[sparql.format_value(line, "location")] = country
-            if country != location:
-                self.location_map[sparql.format_value(line, "location")] += f" ({location})"
-
-        return records
-
-    def execute(self, record):
+    def execute(self, record: Record):
         transcription = replace_apostrophe(record.transcription)
 
         # Fetch the content of the page having the transcription for title
@@ -158,7 +141,8 @@ class OcWiktionary(Wiktionary):
         if learning_or_residence:
 
             self.location_map = {}
-            raw_location_map = sparql.request(SPARQL_ENDPOINT, LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
+            raw_location_map = sparql.request(SPARQL_ENDPOINT,
+                                              LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
 
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")
@@ -190,16 +174,7 @@ class OcWiktionary(Wiktionary):
             str(wikicode),
         )
 
-        # Save the result
-        result = False
-        try:
-            result = self.do_edit(transcription, wtp.parse(wikicode), basetimestamp)
-        except Exception as e:
-            if "editconflict" in str(e):
-                self.execute(record)
-            else:
-                raise e
-        if result:
-            print(f'{record.id}: added to ocwiktionary - https://oc.wiktionary.org/wiki/{transcription}')
+        return self.save_result(basetimestamp, record, transcription, wtp.parse(wikicode))
 
-        return result
+    def get_save_message(self, record, transcription):
+        return f'{record.id}: added to ocwiktionary - https://oc.wiktionary.org/wiki/{transcription}'

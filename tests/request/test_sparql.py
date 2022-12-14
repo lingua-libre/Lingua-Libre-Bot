@@ -1,6 +1,6 @@
 import pytest
 
-from utils import sparql
+from request import sparql
 
 
 class MockResult:

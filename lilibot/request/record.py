@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional
-from utils import sparql
-
+from request import sparql
 
 @dataclass
 class Record:

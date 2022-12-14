@@ -6,7 +6,7 @@ import re
 import uuid
 from typing import List, Dict
 
-from record import Record
+from request.record import Record
 from wikis.wikifamily import WikiFamily
 
 MAX_NUMBER_OF_IDS_PER_REQUEST = 50

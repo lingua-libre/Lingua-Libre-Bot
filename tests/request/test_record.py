@@ -1,6 +1,6 @@
 import pytest
 
-from utils.record import create_record, extract_links_from_bindings
+from request.record import create_record, extract_links_from_bindings
 
 create_record_data = [
     ({'record': {'type': 'uri', 'value': 'https://lingualibre.org/entity/Q1551'},

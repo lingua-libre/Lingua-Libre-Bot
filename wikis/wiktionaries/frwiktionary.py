@@ -3,15 +3,13 @@
 # License: GNU GPL v2+
 
 import re
-from typing import List
 
 import wikitextparser as wtp
 
 import sparql
+from request.record import Record
 from sparql import SPARQL_ENDPOINT
-
-from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
 
 SUMMARY = "Ajout d'un fichier audio de prononciation depuis [[Lingua Libre]]"
 
@@ -54,37 +52,18 @@ class FrWiktionary(Wiktionary):
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "fr", SUMMARY, dry_run)
+        super().__init__(user, password, "fr", SUMMARY, dry_run, LOCATION_QUERY)
 
-    """
-    Public methods
-    """
+    def compute_location_label(self, country, location):
+        return country if country == location else f"{location} ({country})"
 
-    # Prepare the records to be added on the French Wiktionary:
-    # - Fetch the needed language code map (Qid -> BCP 47, used by frwiktionary)
-    # - Get the labels of the speaker's location in French
-    def prepare(self, records: List[Record]) -> List[Record]:
-        # Get BCP 47 language code map
+    def fetch_language_codes(self):
         self.language_code_map = {}
         raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
-
         for line in raw_language_code_map:
             self.language_code_map[
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
-
-        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
-
-        self.location_map = {}
-        for line in raw_location_map:
-            country = sparql.format_value(line, "countryLabel")
-            location = sparql.format_value(line, "locationLabel")
-            if country == location:
-                self.location_map[sparql.format_value(line, "location")] = country
-            else:
-                self.location_map[sparql.format_value(line, "location")] = f"{location} ({country})"
-
-        return records
 
     # Try to use the given record on the French Wiktionary
     def execute(self, record: Record) -> bool:
@@ -104,7 +83,7 @@ class FrWiktionary(Wiktionary):
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.__get_language_section(wikicode, record.language["qid"])
+        language_section = self._get_language_section(wikicode, record.language["qid"])
 
         # Whether there is no section for the current language
         if language_section is None:
@@ -112,7 +91,7 @@ class FrWiktionary(Wiktionary):
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.__get_pronunciation_section(language_section)
+        pronunciation_section = self._get_pronunciation_section(language_section)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
@@ -143,43 +122,16 @@ class FrWiktionary(Wiktionary):
             language_level
         )
 
-        # Save the result
-        result = False
-        try:
-            result = self.do_edit(transcription, wikicode, basetimestamp)
-        except Exception as e:
-            if "editconflict" in str(e):
-                self.execute(record)
-            else:
-                raise e
-        if result:
-            print(
-                f'{record.id}//{transcription}: added to frwiktionary - https://fr.wiktionary.org/wiki/{transcription}')
+        return self.save_result(basetimestamp, record, transcription, wikicode)
 
-        return result
+    def get_save_message(self, record, transcription):
+        return f'{record.id}//{transcription}: added to frwiktionary - https://fr.wiktionary.org/wiki/{transcription}'
 
-    # Try to extract the language section
-    def __get_language_section(self, wikicode, language_qid):
-        # Check if the record's language has a BCP 47 code, stop here if not
-        if language_qid not in self.language_code_map:
-            return None
-
-        lang = self.language_code_map[language_qid]
-
-        # Travel across each sections titles to find the one we want
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "{{langue|" + lang + "}}":
-                return section
-
-                # If we arrive here, it means that there is no section for
-                # the record's language
-        return None
+    def language_section(self, lang):
+        return "{{langue|" + lang + "}}"
 
     # Try to extract the pronunciation subsection
-    def __get_pronunciation_section(self, wikicode):
+    def _get_pronunciation_section(self, wikicode):
         for section in wikicode.sections:
             if section.title is None:
                 continue
@@ -209,7 +161,7 @@ class FrWiktionary(Wiktionary):
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
-        return self.__get_pronunciation_section(wikicode)
+        return self._get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
     def __append_file(self, wikicode, filename, language_qid, location_qid, language_level):

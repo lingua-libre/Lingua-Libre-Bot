@@ -7,7 +7,7 @@ import requests
 
 import sparql
 
-from record import Record
+from request.record import Record
 
 ENDPOINT = "https://lingualibre.org/bigdata/namespace/wdq/sparql"
 API = "https://lingualibre.org/api.php"

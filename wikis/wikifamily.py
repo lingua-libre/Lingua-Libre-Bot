@@ -6,7 +6,7 @@ import abc
 from typing import List
 
 import pywiki
-from record import Record
+from request.record import Record
 
 
 class WikiFamily(abc.ABC):
