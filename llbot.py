@@ -13,6 +13,7 @@ from wikis.wikidata import Wikidata, Lexemes
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
+from wikis.wiktionaries.orwiktionary import OrWiktionary
 from wikis.wiktionaries.shywiktionary import ShyWiktionary
 
 config = configparser.ConfigParser()
@@ -28,6 +29,7 @@ def main() -> None:
         "frwiktionary": FrWiktionary,
         "kuwiktionary": KuWiktionary,
         "ocwiktionary": OcWiktionary,
+        "orwiktionary": OrWiktionary,
         "shywiktionary": ShyWiktionary,
     }
 
@@ -39,6 +41,7 @@ def main() -> None:
 
     user = config.get("wiki", "user")
     password = config.get("wiki", "password")
+
     wikis = {
         wiki_name: wiki_class(user, password, bool(args.dryrun))
         for wiki_name, wiki_class in wiki_classes.items()
