@@ -5,9 +5,10 @@
 # License: GNU GPL v2+
 
 import re
+
 import wikitextparser as wtp
 
-from sparql import Sparql
+import sparql
 from wikis.wiktionary import Wiktionary
 
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
@@ -16,7 +17,7 @@ SUMMARY = "ଲିଙ୍ଗୁଆ ଲିବ୍ରେରୁ ଏକ ଉଚ୍ଚା
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n=== ଉଚ୍ଚାରଣ ===\n$1"
 PRONUNCIATION_LINE = "\n* {{ଅଡ଼ିଓ|$1|ଧ୍ୱନି (ମାନକ ଓଡ଼ିଆ)|lang=$2}}"
-#{{ଅଡ଼ିଓ|Or-ଓଡ଼ିଆ 01.oga|ଧ୍ୱନି|lang=or}}
+# {{ଅଡ଼ିଓ|Or-ଓଡ଼ିଆ 01.oga|ଧ୍ୱନି|lang=or}}
 
 # To be sure not to miss any title, they are normalized during comparaisons;
 # those listed bellow must thereby be without any space
@@ -32,7 +33,6 @@ WHERE {
 }
 """
 
-
 BOTTOM_REGEX = re.compile(
     r"(?:\s*(?:\[\[(?:Category|ଶ୍ରେଣୀ):[^\]]+\]\])?)*$",
     re.IGNORECASE,
@@ -41,7 +41,7 @@ BOTTOM_REGEX = re.compile(
 
 class OrWiktionary(Wiktionary):
 
-    def __init__(self, user, password):
+    def __init__(self, user, password, dry_run: bool):
         """
         Constructor.
 
@@ -52,7 +52,7 @@ class OrWiktionary(Wiktionary):
         password
             Password to log into the account.
         """
-        super().__init__(user, password, "or", SUMMARY)
+        super().__init__(user, password, "or", SUMMARY, dry_run)
 
     """
     Public methods
@@ -61,12 +61,10 @@ class OrWiktionary(Wiktionary):
     # Prepare the records to be added on the Odia Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by orwiktionary)
     def prepare(self, records):
-        sparql = Sparql(SPARQL_ENDPOINT)
-
         # Get BCP 47 language code map
         self.language_code_map = {}
         self.language_label_map = {}
-        raw_language_code_map = sparql.request(LANGUAGE_QUERY)
+        raw_language_code_map = sparql.request(SPARQL_ENDPOINT, LANGUAGE_QUERY)
 
         for line in raw_language_code_map:
             self.language_code_map[
@@ -80,12 +78,12 @@ class OrWiktionary(Wiktionary):
 
     # Try to use the given record on the Odia Wiktionary
     def execute(self, record):
-        transcription = record["transcription"]
+        transcription = record.transcription
         print(f"Treating {transcription}")
-        
+
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
-            transcription, record["file"]
+            transcription, record.file
         )
 
         # Whether there is no entry for this record on orwiktionary
@@ -94,17 +92,17 @@ class OrWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(record["id"] + ": already on ocwiktionary")
+            print(f"{record.id}: already on ocwiktionary")
             return False
 
         # Try to extract the section of the language of the record
         language_section = self.get_language_section(
-            wikicode, record["language"]["qid"]
+            wikicode, record.language["qid"]
         )
-        
+
         # Whether there is no section for the current language
         if language_section is None:
-            print(record["id"] + "//" + transcription + ": language section not found")
+            print(f"{record.id}//{transcription}: language section not found")
             return False
 
         # Try to extract the pronunciation subsection
@@ -117,30 +115,29 @@ class OrWiktionary(Wiktionary):
         # Add the pronunciation file to the pronunciation section
         self.append_file(
             pronunciation_section,
-            record["file"],
-            record["language"]["qid"],
+            record.file,
+            record.language["qid"],
         )
-        
+
         # Save the result
+        result = False
         try:
-            #result = self.do_edit(transcription, wtp.parse(wikicode), basetimestamp)
             result = self.do_edit(transcription, wikicode, basetimestamp)
         except Exception as e:
             # If we got an editconflict, just restart from the beginning
-            if str(e).find("editconflict") > -1:
+            if "editconflict" in str(e):
                 self.execute(record)
             else:
                 raise e
 
         if result:
             print(
-                record["id"]
+                record.id
                 + ": added to orwiktionary - https://or.wiktionary.org/wiki/"
                 + transcription
             )
 
         return result
-
 
     """
     Private methods
@@ -160,20 +157,20 @@ class OrWiktionary(Wiktionary):
             if section.title is None:
                 continue
 
-            #Examples:
-            #* water -> == [[ଇଂରାଜୀ ଭାଷା|ଇଂରାଜୀ]] ==
-            #(keep ଇଂରାଜୀ ଭାଷା because this is the Wikidata label)
-            #* ଓଡ଼ିଆ -> ==ଓଡ଼ିଆ==
-            #* ନାଜର୍ -> == [[ଓଡ଼ିଆ]] ==
+            # Examples:
+            # * water -> == [[ଇଂରାଜୀ ଭାଷା|ଇଂରାଜୀ]] ==
+            # (keep ଇଂରାଜୀ ଭାଷା because this is the Wikidata label)
+            # * ଓଡ଼ିଆ -> ==ଓଡ଼ିଆ==
+            # * ନାଜର୍ -> == [[ଓଡ଼ିଆ]] ==
 
             clean_title = section.title
             pos1 = clean_title.find("|")
             if pos1 != -1:
                 pos2 = clean_title.find("]]")
-                clean_title = clean_title[:pos1]+clean_title[pos2:]
+                clean_title = clean_title[:pos1] + clean_title[pos2:]
             clean_title = clean_title.replace(" ", "") \
-                                     .replace("[[","") \
-                                     .replace("]]","")
+                .replace("[[", "") \
+                .replace("]]", "")
             if clean_title == langLabel:
                 return section
 
@@ -186,7 +183,7 @@ class OrWiktionary(Wiktionary):
         for section in wikicode.sections:
             if section.title is None:
                 continue
-            
+
             if section.title.replace(" ", "") == "ଉଚ୍ଚାରଣ":
                 return section
 
@@ -236,9 +233,5 @@ class OrWiktionary(Wiktionary):
         content = str(content)
 
         search = BOTTOM_REGEX.search(content)
-        if search:
-            index = search.start()
-        else:
-            index = len(content)
-
+        index = search.start() if search else len(content)
         return content[:index] + text + content[index:]
