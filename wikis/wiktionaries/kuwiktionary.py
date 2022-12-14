@@ -13,10 +13,13 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
-from record import Record
-from wikis.wiktionary import Wiktionary, safe_append_text
+from sparql import SPARQL_ENDPOINT
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+from record import Record
+from wikis.wiktionary import Wiktionary, safe_append_text, get_locations_from_records, get_pronunciation_section
+
+PRONUNCIATION_SECTION_NAME = "bilêvkirin"
+
 SUMMARY = "Dengê bilêvkirinê ji Lingua Libre lê hat zêdekirin"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -36,13 +39,13 @@ WHERE {
 
 class KuWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "ku", SUMMARY)
+        super().__init__(user, password, "ku", SUMMARY, dry_run)
 
     """
     Public methods
@@ -62,22 +65,10 @@ class KuWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-        # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            if record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
-        # Prepare two location maps
-        # One that contains both the city and the country (for all languages but Kurdish)
-        # One that contains only the city (only for the Kurdish language)
         self.location_map = {}
         self.location_map_with_country = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
@@ -113,7 +104,7 @@ class KuWiktionary(Wiktionary):
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.__get_pronunciation_section(language_section)
+        pronunciation_section = get_pronunciation_section(language_section, PRONUNCIATION_SECTION_NAME)
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
@@ -169,17 +160,6 @@ class KuWiktionary(Wiktionary):
         # the record's language
         return None
 
-    # Try to extract the pronunciation subsection
-    def __get_pronunciation_section(self, wikicode):
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "bilêvkirin":
-                return section
-
-        return None
-
     # Create a pronunciation subsection
     def __create_pronunciation_section(self, wikicode):
         # The pronunciation section is the first one of the language section
@@ -209,7 +189,7 @@ class KuWiktionary(Wiktionary):
             lang_section.contents, new_section, re.compile(r"===")
         )
 
-        return self.__get_pronunciation_section(wikicode)
+        return get_pronunciation_section(wikicode, PRONUNCIATION_SECTION_NAME)
 
     # Add the audio template to the pronunciation section
     def __append_file(self, wikicode, filename, language_qid, location_qid):

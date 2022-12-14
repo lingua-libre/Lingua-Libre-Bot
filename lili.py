@@ -97,7 +97,8 @@ def live_mode(args, supported_wikis):
         )
         data = json.loads(r.text)["query"]["recentchanges"]
 
-        prev_timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+        prev_timestamp = f"{datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()}Z"
+
         print("Current time:", prev_timestamp)
 
         for rc in data:
@@ -160,4 +161,4 @@ def simple_mode(args, supported_wikis):
     # TODO: rapport on LinguaLibre:Bot/Reports avec exécution, dates début/fin,
     #  nombre d'enregistrements traités, combien ajoutés, combien déjà présents...
 
-    return [record["id"] for record in records]
+    return [record.id for record in records]

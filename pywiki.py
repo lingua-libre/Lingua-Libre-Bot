@@ -12,11 +12,11 @@ from version import __version__
 
 
 class Pywiki:
-    def __init__(self, user, password, api_endpoint, assertion):
+    def __init__(self, user, password, api_endpoint, assertion, dry_run: bool):
         self.user = user
         self.basic_user_name = self.user.split("@")[0]
         self.password = password
-        self.dry_run = False
+        self.dry_run = dry_run
         self.api_endpoint = api_endpoint
         self.assertion = assertion
         self.limit = 5000 if self.assertion == "bot" else 500
@@ -27,9 +27,6 @@ class Pywiki:
                               + ' (https://github.com/lingua-libre/Lingua-Libre-Bot)'
             }
         )
-
-    def set_dry_run(self, dry_run):
-        self.dry_run = dry_run
 
     @backoff.on_exception(backoff.expo,
                           (requests.exceptions.Timeout,

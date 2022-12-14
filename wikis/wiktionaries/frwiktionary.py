@@ -8,11 +8,12 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
-from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
+from sparql import SPARQL_ENDPOINT
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-SUMMARY = "Ajout d'un fichier audio de prononciation depuis Lingua Libre"
+from record import Record
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records
+
+SUMMARY = "Ajout d'un fichier audio de prononciation depuis [[Lingua Libre]]"
 
 # Do not remove the $1, it is used to force the section to have a content
 EMPTY_PRONUNCIATION_SECTION = "\n\n=== {{S|prononciation}} ===\n$1"
@@ -47,13 +48,13 @@ BOTTOM_REGEX = re.compile(
 
 class FrWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "fr", SUMMARY)
+        super().__init__(user, password, "fr", SUMMARY, dry_run)
 
     """
     Public methods
@@ -72,18 +73,9 @@ class FrWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-        # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            elif record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
         self.location_map = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")

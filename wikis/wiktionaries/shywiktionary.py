@@ -8,10 +8,12 @@ from typing import List
 import wikitextparser as wtp
 
 import sparql
-from record import Record
-from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text
+from sparql import SPARQL_ENDPOINT
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+from record import Record
+from wikis.wiktionary import Wiktionary, replace_apostrophe, safe_append_text, get_locations_from_records, \
+    get_pronunciation_section
+
 SUMMARY = "Arnay afaylu s weslay s ɣer Lingua Libre"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -49,13 +51,13 @@ BOTTOM_REGEX = re.compile(
 
 class ShyWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "shy", SUMMARY)
+        super().__init__(user, password, "shy", SUMMARY, dry_run)
 
     """
     Public methods
@@ -74,18 +76,9 @@ class ShyWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "code")
 
-            # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            elif record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
         self.location_map = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
@@ -129,7 +122,7 @@ class ShyWiktionary(Wiktionary):
             return False
 
         # Try to extract the pronunciation subsection
-        pronunciation_section = self.__get_pronunciation_section(language_section)
+        pronunciation_section = get_pronunciation_section(language_section, "{{s|alaɣi}}")
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
@@ -186,21 +179,6 @@ class ShyWiktionary(Wiktionary):
                 # the record's language
         return None
 
-    def __get_pronunciation_section(self, wikicode):
-        """
-        Try to extract the pronunciation subsection
-        @param wikicode:
-        @return:
-        """
-        for section in wikicode.sections:
-            if section.title is None:
-                continue
-
-            if section.title.replace(" ", "").lower() == "{{s|alaɣi}}":
-                return section
-
-        return None
-
     def __create_pronunciation_section(self, wikicode):
         """
         Create a pronunciation subsection
@@ -225,7 +203,7 @@ class ShyWiktionary(Wiktionary):
             prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
-        return self.__get_pronunciation_section(wikicode)
+        return get_pronunciation_section(wikicode, "{{s|alaɣi}}")
 
     def __append_file(self, wikicode, filename, language_qid, location_qid):
         """

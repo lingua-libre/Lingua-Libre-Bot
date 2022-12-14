@@ -15,6 +15,7 @@ LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 WIKIDATA_ENTITY = u"http://www.wikidata.org/entity/"
 COMMONS_FILEPATH = u"http://commons.wikimedia.org/wiki/Special:FilePath/"
 
+SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 # TODO better handle the exceptions coming from this
 @backoff.on_exception(backoff.expo,
@@ -39,7 +40,7 @@ def request(endpoint: str, query: str):
         retry_after = int(response.headers["Retry-After"])
 
         error = re.search(r'<\W*title\W*(.*)</title', response.text, re.IGNORECASE)
-        print(f"Error 403; {error.group(1)}\nWait for {retry_after} seconds")
+        print(f"Error 403; {error[1]}\nWait for {retry_after} seconds")
 
         time.sleep(retry_after)
         return ""
@@ -81,3 +82,4 @@ def format_value(sparql_result, key):
         if value.startswith(COMMONS_FILEPATH):
             value = urllib.parse.unquote(value[len(COMMONS_FILEPATH):])
     return value
+

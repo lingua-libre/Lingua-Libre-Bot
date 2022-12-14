@@ -7,9 +7,9 @@ import re
 import wikitextparser as wtp
 
 import sparql
-from wikis.wiktionary import Wiktionary, replace_apostrophe
+from sparql import SPARQL_ENDPOINT
+from wikis.wiktionary import Wiktionary, replace_apostrophe, get_locations_from_records
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 SUMMARY = "Ajust d'un fichèr audiò de prononciacion de Lingua Libre estant"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -51,13 +51,13 @@ BOTTOM_REGEX = re.compile(
 
 class OcWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "oc", SUMMARY)
+        super().__init__(user, password, "oc", SUMMARY, dry_run)
 
     """
     Public methods
@@ -80,18 +80,9 @@ class OcWiktionary(Wiktionary):
                 sparql.format_value(line, "item")
             ] = sparql.format_value(line, "itemLabel")
 
-            # Extract all different locations
-        locations = set()
-        for record in records:
-            if record.language["learning"] is not None:
-                locations.add(record.language["learning"])
-            elif record.speaker_residence is not None:
-                locations.add(record.speaker_residence)
+        raw_location_map = get_locations_from_records(LOCATION_QUERY, records)
 
         self.location_map = {}
-        raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                          LOCATION_QUERY.replace("$1", " wd:".join(locations))
-                                          )
         for line in raw_location_map:
             country = sparql.format_value(line, "countryLabel")
             location = sparql.format_value(line, "locationLabel")
@@ -167,9 +158,8 @@ class OcWiktionary(Wiktionary):
         if learning_or_residence:
 
             self.location_map = {}
-            raw_location_map = sparql.request(SPARQL_ENDPOINT,
-                                              LOCATION_QUERY.replace("$1", " wd:" + learning_or_residence)
-                                              )
+            raw_location_map = sparql.request(SPARQL_ENDPOINT, LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
+
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")
                 location = sparql.format_value(raw_location_map[0], "locationLabel")

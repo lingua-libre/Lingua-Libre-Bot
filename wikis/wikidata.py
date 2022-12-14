@@ -9,6 +9,8 @@ from typing import List, Dict
 from record import Record
 from wikis.wikifamily import WikiFamily
 
+MAX_NUMBER_OF_IDS_PER_REQUEST = 50
+
 PRONUNCIATION_PROPERTY = "P443"
 LANG_PROPERTY = "P407"
 REFURL_PROPERTY = "P854"
@@ -21,13 +23,13 @@ def remove_brackets(title):
 
 
 class AbcWikidata(WikiFamily, abc.ABC):
-    def __init__(self, user: str, password: str) -> None:
+    def __init__(self, user: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
         @param user: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "wikidata", "www")
+        super().__init__(user, password, "wikidata", "www", dry_run)
 
     @abc.abstractmethod
     def _get_wiki_name(self) -> str:
@@ -142,9 +144,9 @@ class Wikidata(AbcWikidata):
         while len(qids) > 0:
             redirects = {
                 **redirects,
-                **self.__resolve_redirects(qids[:50])
+                **self.__search_redirects(qids[:MAX_NUMBER_OF_IDS_PER_REQUEST])
             }
-            qids = qids[50:]
+            qids = qids[MAX_NUMBER_OF_IDS_PER_REQUEST:]
 
         for record in records:
             if record.links["wikidata"] is None:
@@ -171,9 +173,9 @@ class Wikidata(AbcWikidata):
             while len(links[lang]) > 0:
                 connections = {
                     **connections,
-                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:50], lang),
+                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:MAX_NUMBER_OF_IDS_PER_REQUEST], lang),
                 }
-                links[lang] = links[lang][50:]
+                links[lang] = links[lang][MAX_NUMBER_OF_IDS_PER_REQUEST:]
 
         for record in records:
             if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
@@ -183,11 +185,11 @@ class Wikidata(AbcWikidata):
 
         return records
 
-    def __resolve_redirects(self, qids: List[str]) -> Dict[str, str]:
+    def __search_redirects(self, qids: List[str]) -> Dict[str, str]:
         """
-        Find out if the given items are redirects or not
-        @param qids:
-        @return:
+        Associates to each qid the target of the redirection, if relevant.
+        @param qids: a list of qids for which a redirection is searched
+        @return: a dictionary of the redirections in which keys are source qids and values are target qids
         """
         response = self.api.request(
             {
