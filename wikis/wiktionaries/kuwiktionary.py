@@ -39,13 +39,13 @@ WHERE {
 
 class KuWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str, dry_run: bool) -> None:
+    def __init__(self, username: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
-        @param user: Username to login to the wiki
+        @param username: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "ku", SUMMARY, dry_run)
+        super().__init__(username, password, "ku", SUMMARY, dry_run)
 
     """
     Public methods

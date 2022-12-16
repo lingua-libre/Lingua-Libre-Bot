@@ -10,16 +10,18 @@ import requests
 
 from version import __version__
 
+class NoSuchEntityException(Exception):
+    ...
 
 class Pywiki:
-    def __init__(self, user, password, api_endpoint, assertion, dry_run: bool):
-        self.user = user
-        self.basic_user_name = self.user.split("@")[0]
+    def __init__(self, username: str, password: str, api_endpoint, user_type: str, dry_run: bool):
+        self.username = username
+        self.basic_user_name = self.username.split("@")[0]
         self.password = password
         self.dry_run = dry_run
         self.api_endpoint = api_endpoint
-        self.assertion = assertion
-        self.limit = 5000 if self.assertion == "bot" else 500
+        self.user_type = user_type
+        self.limit = 5000 if user_type == "bot" else 500
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -58,6 +60,8 @@ class Pywiki:
                         self.login()
                         relogin -= 1
                         continue
+                    if response["error"]["code"] == "no-such-entity":
+                        raise NoSuchEntityException()
                     break
                 return response
             except requests.exceptions.ConnectionError:
@@ -77,7 +81,7 @@ class Pywiki:
             self.api_endpoint,
             data={
                 "action": "login",
-                "lgname": self.user,
+                "lgname": self.username,
                 "lgpassword": self.password,
                 "format": "json",
             },
@@ -87,27 +91,23 @@ class Pywiki:
             self.api_endpoint,
             data={
                 "action": "login",
-                "lgname": self.user,
+                "lgname": self.username,
                 "lgpassword": self.password,
                 "lgtoken": token,
                 "format": "json",
             },
         )
-        if json.loads(r.text)["login"]["result"] != "Success":
-            return -1
-        return 0
-
-    """
-    Get a crsf token from frwiki to be able to edit a page
-    """
+        return -1 if json.loads(r.text)["login"]["result"] != "Success" else 0
 
     def get_csrf_token(self):
+        """
+          Get a crsf token from frwiki to be able to edit a page
+        """
         r = self.request(
             {
                 "action": "query",
                 "meta": "tokens",
                 "type": "csrf",
-                "assert": self.assertion,
                 "format": "json",
             }
         )

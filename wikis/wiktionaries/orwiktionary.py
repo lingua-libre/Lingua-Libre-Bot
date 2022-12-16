@@ -41,18 +41,18 @@ BOTTOM_REGEX = re.compile(
 
 class OrWiktionary(Wiktionary):
 
-    def __init__(self, user, password, dry_run: bool):
+    def __init__(self, username, password, dry_run: bool):
         """
         Constructor.
 
         Parameters
         ----------
-        user
+        username
             Username to login to the wiki.
         password
             Password to log into the account.
         """
-        super().__init__(user, password, "or", SUMMARY, dry_run)
+        super().__init__(username, password, "or", SUMMARY, dry_run)
 
     """
     Public methods

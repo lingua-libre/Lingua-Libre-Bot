@@ -51,13 +51,13 @@ BOTTOM_REGEX = re.compile(
 
 class OcWiktionary(Wiktionary):
 
-    def __init__(self, user: str, password: str, dry_run: bool) -> None:
+    def __init__(self, username: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
-        @param user: Username to login to the wiki
+        @param username: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "oc", SUMMARY, dry_run)
+        super().__init__(username, password, "oc", SUMMARY, dry_run)
 
     """
     Public methods
@@ -158,7 +158,8 @@ class OcWiktionary(Wiktionary):
         if learning_or_residence:
 
             self.location_map = {}
-            raw_location_map = sparql.request(SPARQL_ENDPOINT, LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
+            raw_location_map = sparql.request(SPARQL_ENDPOINT,
+                                              LOCATION_QUERY.replace("$1", f" wd:{learning_or_residence}"))
 
             if len(raw_location_map) > 0:
                 country = sparql.format_value(raw_location_map[0], "countryLabel")

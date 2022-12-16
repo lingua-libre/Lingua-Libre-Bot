@@ -9,7 +9,7 @@ import sys
 from typing import Iterable
 
 import lili
-from wikis.wikidata import Wikidata, Lexemes
+from wikis.wikidata import Wikidata, Lexeme
 from wikis.wiktionaries.frwiktionary import FrWiktionary
 from wikis.wiktionaries.kuwiktionary import KuWiktionary
 from wikis.wiktionaries.ocwiktionary import OcWiktionary
@@ -25,7 +25,7 @@ if len(res) == 0:
 def main() -> None:
     wiki_classes = {
         "wikidatawiki": Wikidata,
-        "lexemes": Lexemes,
+        "lexemes": Lexeme,
         "frwiktionary": FrWiktionary,
         "kuwiktionary": KuWiktionary,
         "ocwiktionary": OcWiktionary,
@@ -39,11 +39,11 @@ def main() -> None:
     if args.wiki is not None:
         wiki_classes = {args.wiki: wiki_classes[args.wiki]}
 
-    user = config.get("wiki", "user")
+    username = config.get("wiki", "user")
     password = config.get("wiki", "password")
 
     wikis = {
-        wiki_name: wiki_class(user, password, bool(args.dryrun))
+        wiki_name: wiki_class(username, password, bool(args.dryrun))
         for wiki_name, wiki_class in wiki_classes.items()
     }
 

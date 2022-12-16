@@ -14,7 +14,7 @@ import sparql
 from sparql import SPARQL_ENDPOINT
 
 from record import Record
-from wikis.wikifamily import WikiFamily
+from wikis.wiki import Wiki
 
 SANITIZE_REGEX = re.compile(r"== +\n")
 
@@ -71,17 +71,17 @@ def get_pronunciation_section(wikicode: wtp.WikiText, section_title: str) -> Opt
     return None
 
 
-class Wiktionary(WikiFamily, abc.ABC):
+class Wiktionary(Wiki, abc.ABC):
 
-    def __init__(self, user: str, password: str, language_domain: str, summary: str, dry_run: bool) -> None:
+    def __init__(self, username: str, password: str, language_domain: str, summary: str, dry_run: bool) -> None:
         """
         Constructor.
-        @param user: Username to login to the wiki
+        @param username: Username to login to the wiki
         @param password: Password to log into the account
         @param language_domain: The "language" of the wiki (e.g. 'fr', 'en', etc.)
         @param summary: The edit summary
         """
-        super().__init__(user, password, "wiktionary", language_domain, dry_run)
+        super().__init__(username, password, "wiktionary", language_domain, dry_run)
         self.summary = summary
 
     # Fetch the contents of the given Wiktionary entry,

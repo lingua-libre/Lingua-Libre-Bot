@@ -1,13 +1,14 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
 # License: GNU GPL v2+
-import abc
 import re
 import uuid
+from abc import ABC, abstractmethod
 from typing import List, Dict
 
+from pywiki import NoSuchEntityException
 from record import Record
-from wikis.wikifamily import WikiFamily
+from wikis.wiki import Wiki
 
 MAX_NUMBER_OF_IDS_PER_REQUEST = 50
 
@@ -22,23 +23,74 @@ def remove_brackets(title):
     return BRACKET_REGEX.sub("", title).lower()
 
 
-class AbcWikidata(WikiFamily, abc.ABC):
-    def __init__(self, user: str, password: str, dry_run: bool) -> None:
+class Wikibase(Wiki, ABC):
+
+    def __init__(self, username: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
-        @param user: Username to login to the wiki
+        @param username: Username to login to the wiki
         @param password: Password to log into the account
         """
-        super().__init__(user, password, "wikidata", "www", dry_run)
+        super().__init__(username, password, "wikidata", "www", dry_run)
 
-    @abc.abstractmethod
-    def _get_wiki_name(self) -> str:
-        ...
+    def execute(self, record: Record) -> bool:
+        entity_id = self._get_entity_id(record)
 
-    def _is_link_valid(self, record: str) -> bool:
-        return True
+        if entity_id is None:
+            return False
 
-    def _is_already_present(self, entity_id: str, filename: str) -> bool:
+        if not self._is_entity_id_valid(entity_id):
+            return False
+
+        try:
+            if self.__is_already_present(entity_id, record.file):
+                print(f'{record.id}: already on Wikidata')
+                return False
+        except NoSuchEntityException:
+            print(f'{record.id}: no such entity')
+            return False
+
+        result = self.__do_edit(record)
+
+        if result:
+            print(f"{record.id}: added to Wikidata - "
+                  f"https://www.wikidata.org/wiki/{self._format_link_for_summary(entity_id)}")
+
+        return result
+
+    @abstractmethod
+    def _get_entity_id(self, record: Record) -> str:
+        """
+        @return: the entity id for the project from the given record
+        """
+
+    @abstractmethod
+    def _is_entity_id_valid(self, entity_id: str) -> bool:
+        """
+        Check if the given entity id is a valid id on the project.
+        @param entity_id: the entity id to check
+        @return: True if the id is correct; False otherwise
+        """
+
+    @abstractmethod
+    def _build_qualifiers(self, record: Record) -> str:
+        return ""
+
+    @abstractmethod
+    def _format_link_for_summary(self, link: str) -> str:
+        """
+        Format the given link that will be logged.
+        @param link: the link to format
+        @return: a formatted representation of the link
+        """
+
+    def __is_already_present(self, entity_id: str, filename: str) -> bool:
+        """
+        Checks if the given file is already on the page of the given entity.
+        @param entity_id: the id of the page to check
+        @param filename: the name of the file to check
+        @return: True if the file is already on the page; False otherwise
+        """
         response = self.api.request(
             {
                 "action": "wbgetclaims",
@@ -48,43 +100,20 @@ class AbcWikidata(WikiFamily, abc.ABC):
             }
         )
 
-        if PRONUNCIATION_PROPERTY in response["claims"]:
-            for claim in response["claims"][PRONUNCIATION_PROPERTY]:
-                if claim["mainsnak"]["datavalue"]["value"] == filename:
-                    return True
-        return False
-
-    def execute(self, record: Record) -> bool:
-        wiki = self._get_wiki_name()
-        link = record.links[wiki]
-
-        if link is None:
+        if "claims" not in response:
             return False
 
-        if not self._is_link_valid(link):
+        if PRONUNCIATION_PROPERTY not in response["claims"]:
             return False
 
-        if self._is_already_present(link, record.file):
-            print(f'{record.id}: already on Wikidata')
-            return False
+        claims = response["claims"][PRONUNCIATION_PROPERTY]
+        return any(claim["mainsnak"]["datavalue"]["value"] == filename for claim in claims)
 
-        qualifiers = self._build_qualifiers(record)
-
-        result = self._do_edit(link, record.file, record.id, qualifiers)
-
-        if result:
-            print(f"{record.id}: added to Wikidata - "
-                  f"https://www.wikidata.org/wiki/{self._get_edit_link(link)}")
-
-        return result
-
-    def _do_edit(self, entity_id: str, filename: str, lingualibre_id: str, qualifiers: str) -> bool:
+    def __do_edit(self, record: Record) -> bool:
         """
-        Add the given record in a new claim of the given item
-        @param entity_id: The id of the entity to edit
-        @param filename: The name of the file to add to the entity
-        @param lingualibre_id: The id of the element in Lingua Libre
-        @return:
+        Add the given record in a new claim of the relevant item
+        @param record: the record to add
+        @return: True if the request is successful; False otherwise
         """
         response = self.api.request(
             {
@@ -93,19 +122,19 @@ class AbcWikidata(WikiFamily, abc.ABC):
                 "claim": '{"type":"statement","mainsnak":{"snaktype":"value","property":"'
                          + PRONUNCIATION_PROPERTY
                          + '","datavalue":{"type":"string","value":"'
-                         + filename
+                         + record.file
                          + '"}},"id":"'
-                         + entity_id
+                         + self._get_entity_id(record)
                          + "$"
                          + str(uuid.uuid4())
                          + '","qualifiers":{'
-                         + qualifiers
+                         + self._build_qualifiers(record)
                          + '},"references":[{"snaks":{"'
                          + REFURL_PROPERTY
                          + '":[{"snaktype":"value","property":"'
                          + REFURL_PROPERTY
                          + '","datavalue":{"type":"string","value":"https://lingualibre.org/wiki/'
-                         + lingualibre_id
+                         + record.id
                          + '"}}]}}],"rank":"normal"}',
                 "summary": SUMMARY,
                 "token": self.api.get_csrf_token(),
@@ -119,29 +148,19 @@ class AbcWikidata(WikiFamily, abc.ABC):
         print(response)
         return False
 
-    def _build_qualifiers(self, record: Record) -> str:
-        return ""
 
-    @abc.abstractmethod
-    def _get_edit_link(self, link: str) -> str:
-        ...
-
-
-class Wikidata(AbcWikidata):
+class Wikidata(Wikibase):
 
     def prepare(self, records: List[Record]) -> List[Record]:
-        """
-        Prepare all the records for their use on Wikidata
-        @param records:
-        @return:
-        """
-        # Resolve all redirects
-        qids = [record.links["wikidata"]
-                for record in records
-                if record.links["wikidata"] is not None]
+        self.__resolve_redirects(records)
+        self.__add_qid_from_sitelinks(records)
+        return records
+
+    def __resolve_redirects(self, records: List[Record]) -> None:
+        qids = [record.links["wikidata"] for record in records if record.links["wikidata"] is not None]
 
         redirects = {}
-        while len(qids) > 0:
+        while qids:
             redirects = {
                 **redirects,
                 **self.__search_redirects(qids[:MAX_NUMBER_OF_IDS_PER_REQUEST])
@@ -156,38 +175,9 @@ class Wikidata(AbcWikidata):
             if qid in redirects:
                 record.links["wikidata"] = redirects[qid]
 
-        # If a record is linked to an article on Wikipedia but has no linked QID
-        # we try to get it through sitelinks
-        links = {}
-        for record in records:
-            if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
-                continue
-
-            (lang, title) = record.links["wikipedia"].split(":", 1)
-            if lang not in links:
-                links[lang] = []
-            links[lang] += [title]
-
-        connections = {}
-        for lang in links:
-            while len(links[lang]) > 0:
-                connections = {
-                    **connections,
-                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:MAX_NUMBER_OF_IDS_PER_REQUEST], lang),
-                }
-                links[lang] = links[lang][MAX_NUMBER_OF_IDS_PER_REQUEST:]
-
-        for record in records:
-            if not (record.links["wikidata"] is None and record.links["wikipedia"] is not None):
-                continue
-            if record.links["wikipedia"] in connections:
-                record.links["wikidata"] = connections[record.links["wikipedia"]]
-
-        return records
-
     def __search_redirects(self, qids: List[str]) -> Dict[str, str]:
         """
-        Associates to each qid the target of the redirection, if relevant.
+        Associate to each qid the target of the redirection, if relevant.
         @param qids: a list of qids for which a redirection is searched
         @return: a dictionary of the redirections in which keys are source qids and values are target qids
         """
@@ -204,11 +194,31 @@ class Wikidata(AbcWikidata):
             return {}
 
         entities = response["entities"]
-        return {
-            qid: entities[qid]["redirects"]["to"]
-            for qid in entities
-            if "redirects" in entities[qid]
-        }
+        return {qid: entities[qid]["redirects"]["to"] for qid in entities if "redirects" in entities[qid]}
+
+    def __add_qid_from_sitelinks(self, records: List[Record]) -> None:
+        links = {}
+        for record in records:
+            if record.links["wikidata"] is not None or record.links["wikipedia"] is None:
+                continue
+
+            (lang, title) = record.links["wikipedia"].split(":", 1)
+            if lang not in links:
+                links[lang] = []
+            links[lang] += [title]
+        connections = {}
+        for lang in links:
+            while len(links[lang]) > 0:
+                connections = {
+                    **connections,
+                    **self.__get_ids_from_titles(lang + "wiki", links[lang][:MAX_NUMBER_OF_IDS_PER_REQUEST], lang),
+                }
+                links[lang] = links[lang][MAX_NUMBER_OF_IDS_PER_REQUEST:]
+        for record in records:
+            if record.links["wikidata"] is not None or record.links["wikipedia"] is None:
+                continue
+            if record.links["wikipedia"] in connections:
+                record.links["wikidata"] = connections[record.links["wikipedia"]]
 
     def __get_ids_from_titles(self, dbname: str, titles, lang):
         """
@@ -252,8 +262,11 @@ class Wikidata(AbcWikidata):
 
         return connections
 
-    def _get_wiki_name(self) -> str:
-        return "wikidata"
+    def _get_entity_id(self, record: Record) -> str:
+        return record.links["wikidata"]
+
+    def _is_entity_id_valid(self, entity_id: str) -> bool:
+        return True
 
     def _build_qualifiers(self, record: Record) -> str:
         return (
@@ -265,21 +278,24 @@ class Wikidata(AbcWikidata):
                 + '"}}}]'
         )
 
-    def _get_edit_link(self, link: str) -> str:
+    def _format_link_for_summary(self, link: str) -> str:
         return f'{link}#{PRONUNCIATION_PROPERTY}'
 
 
-class Lexemes(AbcWikidata):
+class Lexeme(Wikibase):
 
-    def _is_link_valid(self, link: str) -> bool:
-        if not re.match(r"^L\d+-F\d+$", link):
-            print(f'{link} is not a valid lexeme form id')
+    def _get_entity_id(self, record: Record) -> str:
+        return record.links["lexeme"]
+
+    def _is_entity_id_valid(self, entity_id: str) -> bool:
+        if not re.match(r"^L\d+-F\d+$", entity_id):
+            print(f'{entity_id} is not a valid lexeme form id')
             return False
 
         return True
 
-    def _get_wiki_name(self) -> str:
-        return "lexeme"
+    def _build_qualifiers(self, record: Record) -> str:
+        return ""
 
-    def _get_edit_link(self, link: str) -> str:
+    def _format_link_for_summary(self, link: str) -> str:
         return f'Lexeme:{link.replace("-", "#")}'
