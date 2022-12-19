@@ -93,8 +93,9 @@ If you need to automate the bot running a few times a week, you can use the foll
 ```
 
 ## See also
-- [LinguaLibre:Bot](https://lingualibre.org/wiki/LinguaLibre:Bot) — forum (request, help)
-- [Lingua-libre/Lingua-Libre-Bot](https://github.com/lingua-libre/Lingua-Libre-Bot) — code (python)
-- [User:Lingua_Libre_Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot) — main bot account on Wikimedia
+- [Meta: User:Lingua_Libre_Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot) — main bot account on Wikimedia
   - [Special:CentralAuth](https://meta.wikimedia.org/wiki/Special:CentralAuth/Lingua_Libre_Bot) — userrights across projects
-- [Toolserver lingua-libre-bot](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) — server
+- [LinguaLibre:Bot](https://lingualibre.org/wiki/LinguaLibre:Bot) — forum (request, help)
+- [Github : Lingua-libre/Lingua-Libre-Bot](https://github.com/lingua-libre/Lingua-Libre-Bot) — code (python)
+- [Phabricator: Lingua-libre > Bots and data management](https://phabricator.wikimedia.org/tag/lingua_libre/) — tickets manager
+- [Toolserver: lingua-libre-bot](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) — server (runs here)
