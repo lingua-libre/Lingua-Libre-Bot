@@ -1,9 +1,8 @@
 # Lingua Libre Bot
 This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), whose goal is to ease the reuse of all the records made on [Lingua Libre](https://lingualibre.org) on as much wikis as possible.
 
-## Wikimedia projects
-
-Lingua Libre Bot is able to contribute on the following Wikimedia projects:
+## Wikimedia coverage
+See [CentralAuth](https://meta.wikimedia.org/wiki/Special:CentralAuth/Lingua_Libre_Bot).
 * Wikidata
 * Wikidata Lexemes
 * French Wiktionary
@@ -14,25 +13,19 @@ Lingua Libre Bot is able to contribute on the following Wikimedia projects:
 ## Operational documentation
 
 ### Dependencies
-
-Lingua Libre Bot requires Python 3.6 to work, and the following packages in their latest version:
-* wikitextparser
-* requests
-* argparse
-* uuid
-* backoff
+* Python 3.6
+* wikitextparser (latest)
+* requests (latest)
+* argparse (latest)
+* uuid (latest)
+* backoff (latest)
 
 ### Installation
 
-Install the aforementioned packages:
 ```
-pip install -r requirements.txt
-```
-
-Copy the configuration file and edit it with your information:
-```
-cp config.ini.sample config.ini
-vi config.ini
+pip install -r requirements.txt     # Install packages
+cp config.ini.sample config.ini     # Copy the configuration file
+vi config.ini                       # Edit it with your information
 ```
 
 ### Usage
@@ -68,7 +61,7 @@ live mode
                         
 ```
 
-#### Preferred date format
+#### Prefered date format
 
 ```
 %Y-%m-%dT01:00:00.000+00:00
@@ -79,3 +72,29 @@ If you need to automate the bot running a few times a week, you can use the foll
 > date -d "-2 days" +'%Y-%m-%dT01:00:00.000+00:00'
 2021-06-30T01:00:00.000+00:00
 ```
+
+## Structure
+```
+├── requirements.txt — dependencies list (install only).
+├── config.ini.sample — config sample (install only).
+├── version.py — version number of the bot.
+├── lili.py — 
+├── llbot.py — 
+├── pywiki.py — 
+├── record.py — 
+├── sparql.py — 
+└── wikis/
+    ├── wiki.py — 
+    ├── wiki.py — 
+    ├── wiktionary.py — 
+    └── wiktionaries/
+        ├── {iso}wiktionary.py — ... for wiktionary of language {iso}
+        └── {iso}wiktionary.py — idem, etc.
+```
+
+## See also
+- [LinguaLibre:Bot](https://lingualibre.org/wiki/LinguaLibre:Bot) — forum (request, help)
+- [Lingua-libre/Lingua-Libre-Bot](https://github.com/lingua-libre/Lingua-Libre-Bot) — code (python)
+- [User:Lingua_Libre_Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot) — main bot account on Wikimedia
+  - [Special:CentralAuth](https://meta.wikimedia.org/wiki/Special:CentralAuth/Lingua_Libre_Bot) — userrights across projects
+- [Toolserver lingua-libre-bot](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) — server
