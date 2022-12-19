@@ -61,7 +61,7 @@ live mode
                         
 ```
 
-#### Prefered date format
+#### Preferred date format
 
 ```
 %Y-%m-%dT01:00:00.000+00:00
