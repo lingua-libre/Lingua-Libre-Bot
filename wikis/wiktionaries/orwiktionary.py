@@ -95,8 +95,7 @@ class OrWiktionary(Wiktionary):
             print(f"{record.id}: already on orwiktionary")
             return False
 
-        # Try to extract the section of the lang
-        uage of the record
+        # Try to extract the section of the language of the record
         language_section = self.get_language_section(
             wikicode, record.language["qid"]
         )
