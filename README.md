@@ -85,7 +85,7 @@ If you need to automate the bot running a few times a week, you can use the foll
 ├── sparql.py — 
 └── wikis/
     ├── wiki.py — 
-    ├── wiki.py — 
+    ├── wikidata.py — 
     ├── wiktionary.py — 
     └── wiktionaries/
         ├── {iso}wiktionary.py — ... for wiktionary of language {iso}
