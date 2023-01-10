@@ -92,10 +92,11 @@ class OrWiktionary(Wiktionary):
 
         # Whether the record is already inside the entry
         if is_already_present:
-            print(f"{record.id}: already on ocwiktionary")
+            print(f"{record.id}: already on orwiktionary")
             return False
 
-        # Try to extract the section of the language of the record
+        # Try to extract the section of the lang
+        uage of the record
         language_section = self.get_language_section(
             wikicode, record.language["qid"]
         )
