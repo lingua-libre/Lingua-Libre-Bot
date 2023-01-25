@@ -108,6 +108,7 @@ class Pywiki:
                 "action": "query",
                 "meta": "tokens",
                 "type": "csrf",
+                "assert": self.user_type,
                 "format": "json",
             }
         )
