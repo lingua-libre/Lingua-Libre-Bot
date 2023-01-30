@@ -1,13 +1,17 @@
 #!/bin/bash
 export PYTHONUNBUFFERED=1
-# Loop over all languages supported in Lingua Libre
-# and add missing recording to the targeted wiki
+# Given a list of languages supported in Lingua Libre (list_languages.txt),
+# and a wiki-specific script name (${wiki_project}),
+# adds missing recording to that targeted wiki.
 
 # Useful when a new wiki project is supported by
 # Lingua Libre Bot in order to add all audio that have
 # been recorded in the past
+
+# Define target project
 wiki_project="kuwiktionary"
 
+# Loop on languages supported by lingualibre
 while read langcode; do
     echo "Processing ${langcode}"
     if [ "${langcode}" = "Q21" ]; then
