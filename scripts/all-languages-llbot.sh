@@ -25,7 +25,7 @@ while read langcode; do
         done
     fi
 
-    $HOME/venv/bin/python3 -u $HOME/Lingua-Libre-Bot/llbot.py --wiki kuwiktionary simple --lang ${langcode}
+    $HOME/venv/bin/python3 -u $HOME/Lingua-Libre-Bot/llbot.py --wiki ${wiki_project} simple --lang ${langcode}
     # sleep 5 seconds to avoid Error 429 Too Many Requests
     sleep 5
 done <list_languages.txt
