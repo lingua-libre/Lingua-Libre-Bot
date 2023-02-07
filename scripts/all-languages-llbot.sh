@@ -41,7 +41,7 @@ while read langcode; do
 		   
                 enddate="${year_end}-${month_end}-01T00:00:00.000+00:00"
                 echo "start: ${startdate}, end: ${enddate}"
-               $HOME/venv/bin/python3 -u $HOME/Lingua-Libre-Bot/llbot.pyy --wiki ${wiki_project} simple --lang ${langcode} --startdate ${startdate} --enddate ${enddate}
+               $HOME/venv/bin/python3 -u $HOME/Lingua-Libre-Bot/llbot.py --wiki ${wiki_project} simple --lang ${langcode} --startdate ${startdate} --enddate ${enddate}
 		# sleep 5 seconds to avoid Error 429 Too Many Requests
 		sleep 5
             done
