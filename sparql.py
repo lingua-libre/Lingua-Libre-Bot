@@ -10,11 +10,13 @@ import urllib.parse
 import backoff
 import requests
 
+# Frequent paths root values
 LINGUALIBRE_ENTITY = u"https://lingualibre.org/entity/"
 # Keep both of these below as "http" : that's what's returned by the SPARQL requests
 WIKIDATA_ENTITY = u"http://www.wikidata.org/entity/"
 COMMONS_FILEPATH = u"http://commons.wikimedia.org/wiki/Special:FilePath/"
 
+# SPARQL Service's endpointNextNext
 SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 # TODO better handle the exceptions coming from this
@@ -24,6 +26,7 @@ SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
                                  requests.exceptions.ChunkedEncodingError,
                                  json.decoder.JSONDecodeError),
                       max_tries=5)
+# Handle errors
 def request(endpoint: str, query: str):
     response = requests.post(endpoint, data={"format": "json", "query": query})
 
@@ -66,6 +69,7 @@ def request(endpoint: str, query: str):
     return json.loads(response.text)["results"]["bindings"]
 
 
+# Formating function : substitute paths, keeps value
 def format_value(sparql_result, key):
     if key not in sparql_result:
         return None
