@@ -82,7 +82,7 @@ If you need to automate the bot running a few times a week, you can use the foll
 ├── llbot.py — 
 ├── pywiki.py — 
 ├── record.py — 
-├── sparql.py — 
+├── sparql.py — handles SPARQL queries response's errors and formating
 └── wikis/
     ├── wiki.py — 
     ├── wikidata.py — 
