@@ -79,14 +79,14 @@ If you need to automate the bot running a few times a week, you can use the foll
 ├── config.ini.sample — config sample (install only).
 ├── version.py — version number of the bot.
 ├── lili.py — 
-├── llbot.py — 
+├── llbot.py — abstraction and help documentation
 ├── pywiki.py — 
-├── record.py — 
+├── record.py — data formating
 ├── sparql.py — handles SPARQL queries response's errors and formating
 └── wikis/
     ├── wiki.py — 
-    ├── wikidata.py — 
-    ├── wiktionary.py — 
+    ├── wikidata.py — wikidata specific
+    ├── wiktionary.py — abstraction for wiktionaries
     └── wiktionaries/
         ├── {iso}wiktionary.py — ... for wiktionary of language {iso}
         └── {iso}wiktionary.py — idem, etc.
