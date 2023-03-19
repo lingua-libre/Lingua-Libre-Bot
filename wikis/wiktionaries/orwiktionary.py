@@ -1,13 +1,12 @@
 #!/usr/bin/python3.8
 # -*- coding: utf-8 -*-
-# Author: Pamputt
-# Date: 11 July 2021
 # License: GNU GPL v2+
 
 import re
 
 import wikitextparser as wtp
 
+import pywiki
 import sparql
 from wikis.wiktionary import Wiktionary
 
@@ -53,6 +52,8 @@ class OrWiktionary(Wiktionary):
             Password to log into the account.
         """
         super().__init__(username, password, "or", SUMMARY, dry_run)
+        self.username = username
+        self.password = password
 
     """
     Public methods
@@ -76,10 +77,70 @@ class OrWiktionary(Wiktionary):
 
         return records
 
+    # Check if the file always exists on Wikimedia Commons
+    # under its original filename (the one known in the Lingua Libre
+    # wikibase). It may be different because several files have
+    # been renamed in the past
+    def new_filename_on_Commons(self, filename):
+        commons_api = pywiki.Pywiki(self.username, self.password, f"https://commons.wikimedia.org/w/api.php", "user", False)
+        response = commons_api.request(
+            {
+                "action": "query",
+                "format": "json",
+                "formatversion": "2",
+                "letitle": "File:" + filename,
+                "list": "logevents",
+                "letype": "move",
+            }
+        )
+
+        if not response["query"]["logevents"]:
+            return None
+        
+        page = response["query"]["logevents"][0]
+        if "params" not in page:
+            return None
+
+        filename = page["params"]["target_title"]
+        if filename.startswith("File:"):
+            filename = filename[5:]
+        return filename
+        
+        return None
+    
+    def exists_on_commons(self, filename):            
+        commons_api = pywiki.Pywiki(self.username, self.password, f"https://commons.wikimedia.org/w/api.php", "user", False)
+        response = commons_api.request(
+            {
+                "action": "query",
+                "format": "json",
+                "formatversion": "2",
+                "titles": "File:" + filename,
+            }
+        )
+
+        page = response["query"]["pages"][0]
+
+        # If no pages have been found on Wikimedia Commons for the given title
+        if "missing" in page:
+            return False
+        
+        return True
+
     # Try to use the given record on the Odia Wiktionary
     def execute(self, record):
         transcription = record.transcription
         print(f"Treating {transcription}")
+
+        # Check whether file has been renamed on Wikimedia Commons
+        new_name = self.new_filename_on_Commons(record.file)
+        if new_name:
+            record.file = new_name
+        
+        # Check whether file exists on Wikimedia Commons
+        if not self.exists_on_commons(record.file):
+            #print(f"{record.file} does not exists anymore on Wikimedia Commons. Maybe moved!")
+            return False
 
         # Fetch the content of the page having the transcription for title
         (is_already_present, wikicode, basetimestamp) = self.get_entry(
@@ -112,12 +173,28 @@ class OrWiktionary(Wiktionary):
         if pronunciation_section is None:
             pronunciation_section = self.create_pronunciation_section(language_section)
 
+                # Count the number of pronunciations already present in the section                                        
+        count = 0
+        if (pronunciation_section != None and
+            len(pronunciation_section.sections) > 1 and
+            pronunciation_section.sections[1].contents):
+            count = pronunciation_section.sections[1].contents.count('{{deng|')
+            # https://or.wiktionary.org/wiki/%E0%AC%AC%E0%AD%8D%E0%AD%9F%E0%AC%AC%E0%AC%B9%E0%AC%BE%E0%AC%B0%E0%AC%95%E0%AC%BE%E0%AC%B0%E0%AD%80%E0%AC%99%E0%AD%8D%E0%AC%95_%E0%AC%86%E0%AC%B2%E0%AD%8B%E0%AC%9A%E0%AC%A8%E0%AC%BE:Psubhashish#Lingua_Libre_Bot
+
+            if count >= 5:
+                file1 = open('orwiktionary_more_than_5_pron.txt', 'a')
+                file1.write(f'{record.language["qid"]}/{transcription}: {count}\n')
+                file1.close()
+                print(f'{transcription}: more than 5 pronunciations; skip')
+                return 
+            
         # Add the pronunciation file to the pronunciation section
-        self.append_file(
-            pronunciation_section,
-            record.file,
-            record.language["qid"],
-        )
+        if (count < 5):
+            self.append_file(
+                pronunciation_section,
+                record.file,
+                record.language["qid"],
+            )
 
         # Save the result
         result = False
