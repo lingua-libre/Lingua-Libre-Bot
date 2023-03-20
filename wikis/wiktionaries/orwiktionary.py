@@ -3,14 +3,18 @@
 # License: GNU GPL v2+
 
 import re
+from typing import List
 
 import wikitextparser as wtp
 
-import pywiki
 import sparql
-from wikis.wiktionary import Wiktionary
+from sparql import SPARQL_ENDPOINT
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+from record import Record
+
+import pywiki
+from wikis.wiktionary import Wiktionary, safe_append_text
+
 SUMMARY = "ଲିଙ୍ଗୁଆ ଲିବ୍ରେରୁ ଏକ ଉଚ୍ଚାରଣ ଅଡ଼ିଓ ଯୋଡ଼ିଲି"
 
 # Do not remove the $1, it is used to force the section to have a content
@@ -40,7 +44,7 @@ BOTTOM_REGEX = re.compile(
 
 class OrWiktionary(Wiktionary):
 
-    def __init__(self, username, password, dry_run: bool):
+    def __init__(self, username: str, password: str, dry_run: bool) -> None:
         """
         Constructor.
 
@@ -61,7 +65,7 @@ class OrWiktionary(Wiktionary):
 
     # Prepare the records to be added on the Odia Wiktionary:
     # - Fetch the needed language code map (Qid -> BCP 47, used by orwiktionary)
-    def prepare(self, records):
+    def prepare(self, records: List[Record]) -> List[Record]:
         # Get BCP 47 language code map
         self.language_code_map = {}
         self.language_label_map = {}
@@ -78,10 +82,10 @@ class OrWiktionary(Wiktionary):
         return records
 
     # Check if the file always exists on Wikimedia Commons
-    # under its original filename (the one known in the Lingua Libre
+    # under its original filename (the one know by Lingua Libre
     # wikibase). It may be different because several files have
     # been renamed in the past
-    def new_filename_on_Commons(self, filename):
+    def new_filename_on_Commons(self, filename: str) -> str:
         commons_api = pywiki.Pywiki(self.username, self.password, f"https://commons.wikimedia.org/w/api.php", "user", False)
         response = commons_api.request(
             {
@@ -98,7 +102,9 @@ class OrWiktionary(Wiktionary):
             return None
         
         page = response["query"]["logevents"][0]
+        #print(f"new_filename_on_commons: {page}")
         if "params" not in page:
+            #print(f"Pas de 'params' dans {response}")
             return None
 
         filename = page["params"]["target_title"]
@@ -108,7 +114,7 @@ class OrWiktionary(Wiktionary):
         
         return None
     
-    def exists_on_commons(self, filename):            
+    def exists_on_commons(self, filename: str) -> bool:            
         commons_api = pywiki.Pywiki(self.username, self.password, f"https://commons.wikimedia.org/w/api.php", "user", False)
         response = commons_api.request(
             {
@@ -118,8 +124,11 @@ class OrWiktionary(Wiktionary):
                 "titles": "File:" + filename,
             }
         )
+        # pour récupérer le nouveau nom du fichier après le renommage
+        # format=json&formatversion=2&action=query&letitle=File:LL-Q33810 (ori)-Psubhashish-ଗୁଲତରାସ୍.wav&list=logevents&letype=move
 
         page = response["query"]["pages"][0]
+        #print(f"{page}")
 
         # If no pages have been found on Wikimedia Commons for the given title
         if "missing" in page:
@@ -128,18 +137,17 @@ class OrWiktionary(Wiktionary):
         return True
 
     # Try to use the given record on the Odia Wiktionary
-    def execute(self, record):
+    def execute(self, record: Record) -> bool:
         transcription = record.transcription
         print(f"Treating {transcription}")
 
-        # Check whether file has been renamed on Wikimedia Commons
         new_name = self.new_filename_on_Commons(record.file)
         if new_name:
             record.file = new_name
         
-        # Check whether file exists on Wikimedia Commons
+        # Check if file exists on Commons
         if not self.exists_on_commons(record.file):
-            #print(f"{record.file} does not exists anymore on Wikimedia Commons. Maybe moved!")
+            print(f"{record.file} does not exists anymore on Wikimedia Commons. Maybe moved!")
             return False
 
         # Fetch the content of the page having the transcription for title
@@ -157,7 +165,7 @@ class OrWiktionary(Wiktionary):
             return False
 
         # Try to extract the section of the language of the record
-        language_section = self.get_language_section(
+        language_section = self.__get_language_section(
             wikicode, record.language["qid"]
         )
 
@@ -171,30 +179,14 @@ class OrWiktionary(Wiktionary):
 
         # Create the pronunciation section if it doesn't exist
         if pronunciation_section is None:
-            pronunciation_section = self.create_pronunciation_section(language_section)
+            pronunciation_section = self.__create_pronunciation_section(language_section)
 
-                # Count the number of pronunciations already present in the section                                        
-        count = 0
-        if (pronunciation_section != None and
-            len(pronunciation_section.sections) > 1 and
-            pronunciation_section.sections[1].contents):
-            count = pronunciation_section.sections[1].contents.count('{{deng|')
-            # https://or.wiktionary.org/wiki/%E0%AC%AC%E0%AD%8D%E0%AD%9F%E0%AC%AC%E0%AC%B9%E0%AC%BE%E0%AC%B0%E0%AC%95%E0%AC%BE%E0%AC%B0%E0%AD%80%E0%AC%99%E0%AD%8D%E0%AC%95_%E0%AC%86%E0%AC%B2%E0%AD%8B%E0%AC%9A%E0%AC%A8%E0%AC%BE:Psubhashish#Lingua_Libre_Bot
-
-            if count >= 5:
-                file1 = open('orwiktionary_more_than_5_pron.txt', 'a')
-                file1.write(f'{record.language["qid"]}/{transcription}: {count}\n')
-                file1.close()
-                print(f'{transcription}: more than 5 pronunciations; skip')
-                return 
-            
         # Add the pronunciation file to the pronunciation section
-        if (count < 5):
-            self.append_file(
-                pronunciation_section,
-                record.file,
-                record.language["qid"],
-            )
+        self.__append_file(
+            pronunciation_section,
+            record.file,
+            record.language["qid"],
+        )
 
         # Save the result
         result = False
@@ -221,7 +213,7 @@ class OrWiktionary(Wiktionary):
     """
 
     # Try to extract the language section
-    def get_language_section(self, wikicode, language_qid):
+    def __get_language_section(self, wikicode, language_qid):
         # Check if the record's language has a BCP 47 code, stop here if not
         if language_qid not in self.language_code_map:
             return None
@@ -267,7 +259,7 @@ class OrWiktionary(Wiktionary):
         return None
 
     # Create a pronunciation subsection
-    def create_pronunciation_section(self, wikicode):
+    def __create_pronunciation_section(self, wikicode):
         # Travel across the sections until we find a new
         # language section
         # Examples of language section:
@@ -283,14 +275,14 @@ class OrWiktionary(Wiktionary):
 
         # Append an empty pronunciation section to the last section which
         # is not in the following sections list
-        prev_section.contents = self.safe_append_text(
-            prev_section.contents, EMPTY_PRONUNCIATION_SECTION
+        prev_section.contents = safe_append_text(
+            prev_section.contents, EMPTY_PRONUNCIATION_SECTION, BOTTOM_REGEX
         )
 
         return self.get_pronunciation_section(wikicode)
 
     # Add the audio template to the pronunciation section
-    def append_file(self, wikicode, filename, language_qid):
+    def __append_file(self, wikicode, filename, language_qid):
         section_content = wtp.parse(wikicode.sections[1].contents)
 
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
@@ -298,17 +290,10 @@ class OrWiktionary(Wiktionary):
         if len(section_content.sections) > 1:
             pronunciation_line += "\n\n"
 
-        section_content.sections[0].contents = self.safe_append_text(
+        section_content.sections[0].contents = safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
+            BOTTOM_REGEX
         )
 
         wikicode.sections[1].contents = str(section_content)
-
-    # Append a string to a wikitext string, but before any category
-    def safe_append_text(self, content, text):
-        content = str(content)
-
-        search = BOTTOM_REGEX.search(content)
-        index = search.start() if search else len(content)
-        return content[:index] + text + content[index:]
