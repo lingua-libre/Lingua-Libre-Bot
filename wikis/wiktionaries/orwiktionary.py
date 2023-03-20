@@ -124,8 +124,6 @@ class OrWiktionary(Wiktionary):
                 "titles": "File:" + filename,
             }
         )
-        # pour récupérer le nouveau nom du fichier après le renommage
-        # format=json&formatversion=2&action=query&letitle=File:LL-Q33810 (ori)-Psubhashish-ଗୁଲତରାସ୍.wav&list=logevents&letype=move
 
         page = response["query"]["pages"][0]
         #print(f"{page}")
