@@ -8,6 +8,7 @@ See [CentralAuth](https://meta.wikimedia.org/wiki/Special:CentralAuth/Lingua_Lib
 * French Wiktionary
 * Kurdish Wiktionary
 * Occitan Wiktionary
+* Odia Wiktionary
 * Shawiya Wiktionary
 
 ## Operational documentation
