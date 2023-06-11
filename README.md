@@ -92,11 +92,12 @@ If you need to automate the bot running a few times a week, you can use the foll
         ├── {iso}wiktionary.py — ... for wiktionary of language {iso}
         └── {iso}wiktionary.py — idem, etc.
 ```
+## Contribute
+- [Phabricator: Lingua-libre > Bots and data management](https://phabricator.wikimedia.org/tag/lingua_libre/) — tickets manager
+- [Github: Lingua-libre/Lingua-Libre-Bot](https://github.com/lingua-libre/Lingua-Libre-Bot) — code (python)
 
 ## See also
 - [Meta: User:Lingua_Libre_Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot) — main bot account on Wikimedia
   - [Special:CentralAuth](https://meta.wikimedia.org/wiki/Special:CentralAuth/Lingua_Libre_Bot) — userrights across projects
 - [LinguaLibre:Bot](https://lingualibre.org/wiki/LinguaLibre:Bot) — forum (request, help)
-- [Github: Lingua-libre/Lingua-Libre-Bot](https://github.com/lingua-libre/Lingua-Libre-Bot) — code (python)
-- [Phabricator: Lingua-libre > Bots and data management](https://phabricator.wikimedia.org/tag/lingua_libre/) — tickets manager
 - [Toolserver: lingua-libre-bot](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) — server (runs here)
