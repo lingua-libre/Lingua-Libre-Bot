@@ -7,6 +7,7 @@ export PYTHONUNBUFFERED=1
 # Useful when a new wiki project is supported by
 # Lingua Libre Bot in order to add all audio that have
 # been recorded in the past
+# See phab:T274511
 
 # Define target project
 wiki_project="kuwiktionary"
