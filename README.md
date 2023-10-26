@@ -1,4 +1,6 @@
 # Lingua Libre Bot
+<a href="https://commons.wikimedia.org/wiki/File:Lingua_Libre_Bot_icon.svg" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/Lingua_Libre_Bot_icon.svg" height="250"/></a>
+
 This is the source code of [Lingua Libre Bot](https://meta.wikimedia.org/wiki/User:Lingua_Libre_Bot), whose goal is to ease the reuse of all the records made on [Lingua Libre](https://lingualibre.org) on as much wikis as possible.
 
 ## Wikimedia coverage
