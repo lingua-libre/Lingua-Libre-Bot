@@ -222,9 +222,6 @@ class FrWiktionary(Wiktionary):
         pronunciation_line = PRONUNCIATION_LINE.replace("$1", filename).replace("$2", self.language_code_map[
             language_qid]).replace("$3", location).replace("$4", language_level)
 
-        if len(section_content.sections) > 1:
-            pronunciation_line += "\n\n"
-
         section_content.sections[0].contents = safe_append_text(
             section_content.sections[0].contents,
             pronunciation_line,
