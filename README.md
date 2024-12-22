@@ -80,10 +80,10 @@ If you need to automate the bot running a few times a week, you can use the foll
 ### Wikimedia deployment
 Request [existing maintainer](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) to add you as bot master.
 
-Lingua Libre Bot runs on Wikimedia cloud service **Toolforge**.
+Lingua Libre Bot runs on Wikimedia cloud service **Toolforge.org**.
 Usage of Toolforge requires careful [reading of the documentation](https://wikitech.wikimedia.org/wiki/Help:Toolforge/Quickstart).
-Use your wikimedia account to create a toolsadmin.wikimedia.org account, link with your other wikimedia accounts. Request membership. 
-Connect your SSH key, connect via terminal to Toolforge.org, use `become lingua-libre-bot` . To exit, type `exit`.
+> Use your wikimedia account to create a toolsadmin.wikimedia.org account, link with your other wikimedia accounts. Request membership. Connect your SSH key. 
+> Connect via terminal to Toolforge.org via `ssh -i <path-to-ssh-private-key> <shell-username>@login.toolforge.org`, use `become lingua-libre-bot` : you now are in the working directory. To exit, type `exit`.
 
 ### Local test
 Git clone repository, then run with `--dryrun`.
