@@ -78,7 +78,7 @@ If you need to automate the bot running a few times a week, you can use the foll
 
 ## Run
 ### Wikimedia deployment
-Lingua Libre Bot runs on Wikimedia cloud service **Toolforge.org**.
+Lingua Libre Bot runs on Wikimedia cloud service **[Toolforge.org](https://admin.toolforge.org)**.
 
 Become a maintainer on Tooladmins.wikimedia.org ([Quickstart](https://wikitech.wikimedia.org/wiki/Help:Toolforge/Quickstart)):
 * Use your Wikimedia account to [create a Wikimedia developer account](https://toolsadmin.wikimedia.org/register/)
