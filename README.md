@@ -78,12 +78,22 @@ If you need to automate the bot running a few times a week, you can use the foll
 
 ## Run
 ### Wikimedia deployment
-Request [existing maintainer](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) to add you as bot master.
-
 Lingua Libre Bot runs on Wikimedia cloud service **Toolforge.org**.
-Usage of Toolforge requires careful [reading of the documentation](https://wikitech.wikimedia.org/wiki/Help:Toolforge/Quickstart).
-> Use your wikimedia account to create a toolsadmin.wikimedia.org account, link with your other wikimedia accounts. Request membership. Connect your SSH key. 
-> Connect via terminal to Toolforge.org via `ssh -i <path-to-ssh-private-key> <shell-username>@login.toolforge.org`, use `become lingua-libre-bot` : you now are in the working directory. To exit, type `exit`.
+
+Become a maintainer on Tooladmins.wikimedia.org ([Quickstart](https://wikitech.wikimedia.org/wiki/Help:Toolforge/Quickstart)):
+* Use your Wikimedia account to [create a Wikimedia developer account](https://toolsadmin.wikimedia.org/register/)
+* [Add an SSH public key](https://toolsadmin.wikimedia.org/profile/settings/ssh-keys), you will need it to connect
+* [Request Toolforge's membership](https://toolsadmin.wikimedia.org/tools/membership/apply)
+* Request [active lingua-libre-bot maintainers](https://toolsadmin.wikimedia.org/tools/id/lingua-libre-bot) for membership
+* Please note [your username and link up your accounts](https://toolsadmin.wikimedia.org/profile/settings/accounts/)
+
+Sysadmin the tool via your terminal :
+```bash
+$ ssh -i <path-to-ssh-private-key> <shell-username>@login.toolforge.org`    # now on WM's server
+# ssh -i ~/.ssh/id_ed25519 yug@login.toolforge.org                          # example for User:Yug
+$ become lingua-libre-bot                                                   # now in tool's directory.
+$ exit                                                                      # return to WM's server
+```
 
 ### Local test
 Git clone repository, then run with `--dryrun`.
